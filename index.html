@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoCore</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Itim&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
+    <style>
+        :root {
+            --rv: #391B49;
+            --dl: #795690;
+            --am: #9570C6;
+            --bl: #C29CE4;
+            --ce: #999ECF;
+            --teal: #00FFD4;
+            --neon: #39FF6A;
+            --pink: #FF4FD8;
+            --purple: #B44FFF;
+            --blue: #4FC3FF;
+            --amber: #FFB84F;
+            --bg: #050A14;
+            --bg2: #0A1628;
+            --white: #fff;
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            border: 0;
+            outline: none;
+            text-decoration: none;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--ce);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 255, 212, .06) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 60% at 85% 80%, rgba(180, 79, 255, .09) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 255, 212, .022) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 212, .022) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--teal), var(--purple));
+            border-radius: 10px
+        }
+
+        ::selection {
+            background: rgba(0, 255, 212, .2);
+            color: #fff
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 60px;
+            background: rgba(5, 10, 20, .75);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(0, 255, 212, .15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--purple), var(--teal), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header nav {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        nav a {
+            color: rgba(153, 158, 207, .75);
+            font-size: 15px;
+            padding: 7px 15px;
+            border-radius: 20px;
+            transition: .25s;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            color: var(--teal);
+            background: rgba(0, 255, 212, .07);
+        }
+
+        nav button {
+            background: transparent;
+            border: 1.5px solid rgba(0, 255, 212, .5);
+            color: var(--teal);
+            padding: 8px 22px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .3s;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        nav button:hover {
+            background: var(--teal);
+            color: var(--bg);
+            box-shadow: 0 0 30px rgba(0, 255, 212, .5);
+            transform: translateY(-2px);
+        }
+
+        /* HERO */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(0, 255, 212, .08) 0%, rgba(180, 79, 255, .05) 40%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: orbPulse 4s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes orbPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: .6
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.15);
+                opacity: 1
+            }
+        }
+
+        .hero-container {
+            position: relative;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 20px;
+            max-width: 560px;
+            padding: 0 24px;
+            animation: fadeInUp .8s ease both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .hero-container h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 60px;
+            font-weight: 900;
+            line-height: 1.05;
+            background: linear-gradient(135deg, var(--purple) 40%, #C8D8F0 30%, var(--teal) 60%, var(--neon) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInUp .8s .15s ease both;
+        }
+
+        .hero-container p {
+            font-size: 16px;
+            color: rgba(153, 158, 207, .7);
+            line-height: 1.8;
+            max-width: 440px;
+            animation: fadeInUp .8s .25s ease both;
+        }
+
+        .hero-container button {
+            background: linear-gradient(135deg, var(--teal), #00BFA5);
+            color: var(--bg);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            padding: 15px 48px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all .35s;
+            font-size: 15px;
+            width: fit-content;
+            box-shadow: 0 6px 30px rgba(0, 255, 212, .4);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            animation: fadeInUp .8s .35s ease both;
+        }
+
+        .hero-container button:hover {
+            transform: translateY(-6px) scale(1.04);
+            box-shadow: 0 16px 50px rgba(0, 255, 212, .6);
+        }
+
+        .hero-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            min-height: 160px;
+        }
+
+        .char {
+            display: inline-block;
+            transition: color 0.05s;
+        }
+
+        .floating-cards {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .algo-card {
+            position: absolute;
+            background: rgba(10, 22, 40, .92);
+            backdrop-filter: blur(18px);
+            border-radius: 22px;
+            padding: 30px 28px;
+            font-size: 15px;
+            font-weight: 700;
+            white-space: nowrap;
+            font-family: 'Space Grotesk', sans-serif;
+            animation: floatCard var(--dur, 7s) ease-in-out infinite alternate;
+        }
+
+        .algo-card.c-teal {
+            border: 1px solid rgba(0, 255, 212, .4);
+            color: var(--teal);
+            box-shadow: 0 0 24px rgba(0, 255, 212, .15);
+        }
+
+        .algo-card.c-purple {
+            border: 1px solid rgba(180, 79, 255, .4);
+            color: var(--purple);
+            box-shadow: 0 0 24px rgba(180, 79, 255, .15);
+        }
+
+        .algo-card.c-neon {
+            border: 1px solid rgba(57, 255, 106, .38);
+            color: var(--neon);
+            box-shadow: 0 0 24px rgba(57, 255, 106, .14);
+        }
+
+        .algo-card.c-pink {
+            border: 1px solid rgba(255, 79, 216, .38);
+            color: var(--pink);
+            box-shadow: 0 0 24px rgba(255, 79, 216, .14);
+        }
+
+        .algo-card.c-blue {
+            border: 1px solid rgba(79, 195, 255, .38);
+            color: var(--blue);
+            box-shadow: 0 0 24px rgba(79, 195, 255, .14);
+        }
+
+        .algo-card .card-label {
+            font-size: 18px;
+        }
+
+
+        @keyframes floatCard {
+            0% {
+                transform: translate(0, 0) rotate(var(--r1, -2deg))
+            }
+
+            30% {
+                transform: translate(var(--x1, 8px), var(--y1, -14px)) rotate(var(--r2, 1deg))
+            }
+
+            65% {
+                transform: translate(var(--x2, -7px), var(--y2, 9px)) rotate(var(--r3, -1.5deg))
+            }
+
+            100% {
+                transform: translate(var(--x3, 12px), var(--y3, -7px)) rotate(var(--r4, 2deg))
+            }
+        }
+
+        .algo-card:nth-child(2) {
+            left: 5%;top: 15%;--dur: 7.2s;--r1: -3deg;--r2: 1deg;--r3: -2deg;--r4: 2deg;
+            --x1: 10px;--y1: -14px;--x2: -8px;--y2: 10px;--x3: 12px;--y3: -8px;
+        }
+
+        .algo-card:nth-child(3) {
+            left: 4%;top: 44%;--dur: 8.4s;--r1: 2deg;--r2: -1deg;--r3: 3deg;--r4: -2deg
+            ;--x1: -12px;--y1: 10px;--x2: 8px;--y2: -12px;--x3: -8px;--y3: 10px;
+        }
+
+        .algo-card:nth-child(4) {
+            left: 5%;
+            top: 70%;
+            --dur: 6.8s;
+            --r1: -1deg;
+            --r2: 3deg;
+            --r3: -2deg;
+            --r4: 1.5deg;
+            --x1: 8px;
+            --y1: -10px;
+            --x2: -12px;
+            --y2: 8px;
+            --x3: 6px;
+            --y3: -12px;
+        }
+
+        .algo-card:nth-child(5) {
+            left: 24%;
+            top: 8%;
+            --dur: 9.1s;
+            --r1: 1deg;
+            --r2: -3deg;
+            --r3: 2deg;
+            --r4: -1deg;
+            --x1: -8px;
+            --y1: 12px;
+            --x2: 10px;
+            --y2: -8px;
+            --x3: -6px;
+            --y3: 10px;
+        }
+
+        .algo-card:nth-child(6) {
+            left: 20%;
+            top: 82%;
+            --dur: 7.7s;
+            --r1: -2deg;
+            --r2: 1deg;
+            --r3: -3deg;
+            --r4: 2deg;
+            --x1: 12px;
+            --y1: -8px;
+            --x2: -8px;
+            --y2: 12px;
+            --x3: 10px;
+            --y3: -6px;
+        }
+
+        .algo-card:nth-child(7) {
+            right: 5%;
+            top: 13%;
+            --dur: 8.6s;
+            --r1: 2deg;
+            --r2: -1deg;
+            --r3: 3deg;
+            --r4: -2deg;
+            --x1: -14px;
+            --y1: 10px;
+            --x2: 8px;
+            --y2: -14px;
+            --x3: -10px;
+            --y3: 8px;
+        }
+
+        .algo-card:nth-child(8) {
+            right: 4%;
+            top: 42%;
+            --dur: 6.3s;
+            --r1: -3deg;
+            --r2: 2deg;
+            --r3: -1deg;
+            --r4: 3deg;
+            --x1: 10px;
+            --y1: -12px;
+            --x2: -8px;
+            --y2: 10px;
+            --x3: 6px;
+            --y3: -8px;
+        }
+
+        .algo-card:nth-child(9) {
+            right: 5%;
+            top: 68%;
+            --dur: 9.8s;
+            --r1: 1deg;
+            --r2: -2deg;
+            --r3: 3deg;
+            --r4: -1deg;
+            --x1: -8px;
+            --y1: 14px;
+            --x2: 10px;
+            --y2: -8px;
+            --x3: -12px;
+            --y3: 10px;
+        }
+
+        .algo-card:nth-child(10) {
+            right: 24%;
+            top: 7%;
+            --dur: 7.4s;
+            --r1: -1deg;
+            --r2: 3deg;
+            --r3: -2deg;
+            --r4: 1deg;
+            --x1: 8px;
+            --y1: -10px;
+            --x2: -10px;
+            --y2: 8px;
+            --x3: 12px;
+            --y3: -12px;
+        }
+
+        .algo-card:nth-child(11) {
+            right: 20%;
+            top: 82%;
+            --dur: 8.1s;
+            --r1: 2deg;
+            --r2: -3deg;
+            --r3: 1deg;
+            --r4: -2deg;
+            --x1: -10px;
+            --y1: 10px;
+            --x2: 8px;
+            --y2: -12px;
+            --x3: -6px;
+            --y3: 8px;
+        }
+
+        .algo-card:nth-child(12) {
+            left: 33%;
+            top: 76%;
+            --dur: 10.2s;
+            --r1: -2deg;
+            --r2: 1deg;
+            --r3: -1deg;
+            --r4: 2deg;
+            --x1: 6px;
+            --y1: -8px;
+            --x2: -10px;
+            --y2: 6px;
+            --x3: 8px;
+            --y3: -10px;
+        }
+
+        .algo-card:nth-child(13) {
+            right: 33%;
+            top: 76%;
+            --dur: 7.9s;
+            --r1: 3deg;
+            --r2: -1deg;
+            --r3: 2deg;
+            --r4: -3deg;
+            --x1: -8px;
+            --y1: 10px;
+            --x2: 6px;
+            --y2: -8px;
+            --x3: -10px;
+            --y3: 6px;
+        }
+
+        /* ABOUT */
+        .about {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 70px 80px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .about-encrypt,
+        .about-decrypt {
+            border-radius: 24px;
+            padding: 44px;
+            width: 650px;
+            height: 370px;
+            position: relative;
+            overflow: hidden;
+            transition: .4s;
+            cursor: default;
+        }
+
+        .about-encrypt {
+            background: rgba(5, 10, 20, .7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 212, .18);
+        }
+
+        .about-encrypt::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 220px;
+            height: 220px;
+            background: var(--teal);
+            filter: blur(90px);
+            opacity: .08;
+            pointer-events: none;
+        }
+
+        .about-decrypt {
+            background: rgba(5, 10, 20, .7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(57, 255, 106, .15);
+        }
+
+        .about-decrypt::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 220px;
+            height: 220px;
+            background: var(--neon);
+            filter: blur(90px);
+            opacity: .07;
+            pointer-events: none;
+        }
+
+        .about-encrypt:hover {
+            transform: translateY(-10px);
+            border-color: rgba(0, 255, 212, .45);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .6), 0 0 40px rgba(0, 255, 212, .15);
+        }
+
+        .about-decrypt:hover {
+            transform: translateY(-10px);
+            border-color: rgba(57, 255, 106, .38);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .6), 0 0 40px rgba(57, 255, 106, .12);
+        }
+
+        .about-encrypt h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--teal);
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 255, 212, .3);
+        }
+
+        .about-decrypt h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--neon);
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(57, 255, 106, .3);
+        }
+
+        .about-encrypt h5,
+        .about-decrypt h5 {
+            font-size: 15px;
+            color: var(--ce);
+            margin-bottom: 18px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: .6;
+        }
+
+        .about-encrypt p,
+        .about-decrypt p {
+            font-size: 16px;
+            color: rgba(153, 158, 207, .75);
+            line-height: 1.85;
+            margin-bottom: 20px;
+        }
+
+        .about-encrypt ul,
+        .about-decrypt ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .about-encrypt ul li {
+            font-size: 16px;
+            color: rgba(0, 255, 212, .75);
+            margin-bottom: 8px;
+            padding-left: 18px;
+            position: relative;
+        }
+
+        .about-encrypt ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--teal);
+        }
+
+        .about-decrypt ul li {
+            font-size: 16px;
+            color: rgba(57, 255, 106, .7);
+            margin-bottom: 8px;
+            padding-left: 18px;
+            position: relative;
+        }
+
+        .about-decrypt ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--neon);
+        }
+
+        /* ALGORITHM */
+        .algorithm {
+            position: relative;
+            z-index: 2;
+        }
+
+        .aw {
+            background: transparent;
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--ce);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .aw::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 70% 50% at 20% 20%, rgba(0, 255, 212, .05) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 80%, rgba(180, 79, 255, .07) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .aw::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(0, 255, 212, .018) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 212, .018) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .inn {
+            position: relative;
+            z-index: 2;
+            padding: 70px 0 80px;
+        }
+
+        .inn .sh,
+        .inn .flt,
+        .inn .leg {
+            padding-left: 24px;
+            padding-right: 24px;
+        }
+
+        .sh {
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .sh h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 58px;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--teal), var(--purple), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .tl {
+            display: block;
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--teal), var(--purple));
+            border-radius: 3px;
+            margin: 12px auto 16px;
+            box-shadow: 0 0 16px rgba(0, 255, 212, .6);
+        }
+
+        .sh p {
+            font-size: 15px;
+            color: rgba(153, 158, 207, .5);
+            margin-top: 4px;
+        }
+
+        .flt {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 30px 0 38px;
+            flex-wrap: wrap;
+        }
+
+        .fb {
+            padding: 13px 32px;
+            border-radius: 28px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .25s;
+            letter-spacing: .8px;
+            border: 1.5px solid rgba(0, 255, 212, .22);
+            background: rgba(0, 255, 212, .04);
+            color: rgba(153, 158, 207, .65);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .fb:hover {
+            color: var(--teal);
+            border-color: rgba(0, 255, 212, .5);
+            background: rgba(0, 255, 212, .08);
+            transform: translateY(-2px);
+        }
+
+        .fb.on {
+            background: rgba(0, 255, 212, .12);
+            border-color: rgba(0, 255, 212, .6);
+            color: var(--teal);
+            box-shadow: 0 0 22px rgba(0, 255, 212, .25), 0 0 0 3px rgba(0, 255, 212, .08);
+            transform: translateY(-2px);
+        }
+
+        .ow {
+            position: relative;
+            width: 100%;
+        }
+
+        .ow svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .ow svg g[data-page] {
+            cursor: pointer;
+        }
+
+        .ow svg g[data-page]:hover circle:nth-child(2) {
+            filter: brightness(1.3);
+            stroke-opacity: 1 !important;
+            transform: scale(1.045);
+        }
+
+        .orb-tooltip {
+            position: fixed;
+            background: rgba(5, 10, 20, 0.95);
+            border: 1px solid rgba(0, 255, 212, 0.45);
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 4px 20px rgba(0, 255, 212, 0.25);
+            z-index: 50;
+            opacity: 0;
+            transform: translateX(-50%) translateY(0px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+
+        .orb-tooltip.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-4px);
+        }
+
+        .orb-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(0, 255, 212, 0.45);
+        }
+
+        .leg {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: rgba(153, 158, 207, .6);
+        }
+
+        .ld {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* DH SECTION */
+        .dh-section {
+            margin: 60px 80px;
+            padding: 60px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(10, 16, 28, .88), rgba(8, 18, 24, .75));
+            border: 1px solid rgba(0, 255, 212, .12);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .dh-section::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            height: 250px;
+            background: radial-gradient(ellipse, rgba(0, 255, 212, .08), transparent 70%);
+            pointer-events: none;
+        }
+
+        .dh-section>h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 58px;
+            font-weight: 800;
+            margin-bottom: 32px;
+            background: linear-gradient(90deg, var(--teal), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .inputs {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 44px;
+            flex-wrap: wrap;
+        }
+
+        .inputs input {
+            padding: 13px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(0, 255, 212, .22);
+            width: 145px;
+            background: rgba(10, 22, 40, .7);
+            color: var(--bl);
+            font-size: 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: .3s;
+        }
+
+        .inputs input::placeholder {
+            color: rgba(153, 158, 207, .35);
+            font-size: 13px;
+        }
+
+        .inputs input:focus {
+            outline: none;
+            border-color: rgba(0, 255, 212, .5);
+            box-shadow: 0 0 22px rgba(0, 255, 212, .25);
+            background: rgba(10, 22, 40, .9);
+        }
+
+        .dh-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 34px;
+        }
+
+        .person {
+            width: 165px;
+            padding: 28px 22px;
+            border-radius: 22px;
+            background: rgba(5, 10, 20, .8);
+            text-align: center;
+            transition: .4s;
+        }
+
+        .person:first-child {
+            border: 1px solid rgba(0, 255, 212, .22);
+            box-shadow: 0 0 24px rgba(0, 255, 212, .08);
+        }
+
+        .person:last-child {
+            border: 1px solid rgba(57, 255, 106, .18);
+            box-shadow: 0 0 24px rgba(57, 255, 106, .07);
+        }
+
+        .person:first-child:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 50px rgba(0, 255, 212, .35);
+            border-color: rgba(0, 255, 212, .5);
+        }
+
+        .person:last-child:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 50px rgba(57, 255, 106, .3);
+            border-color: rgba(57, 255, 106, .45);
+        }
+
+        .avatar {
+            background: rgba(180, 79, 255, .08);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            border: 1px solid rgba(180, 79, 255, .18);
+        }
+
+        .person:first-child h3 {
+            color: var(--teal);
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .person:last-child h3 {
+            color: var(--neon);
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .person p {
+            font-size: 13px;
+            color: var(--ce);
+            margin-top: 8px;
+        }
+
+        .person p span {
+            color: var(--bl);
+            font-weight: 700;
+        }
+
+        .line {
+            flex: 1;
+            height: 6px;
+            position: relative;
+            margin: 0 28px;
+            min-width: 80px;
+        }
+
+        .glow-line {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--teal), var(--purple), var(--neon));
+            border-radius: 6px;
+            box-shadow: 0 0 18px rgba(0, 255, 212, .5);
+            animation: lineGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes lineGlow {
+            0% {
+                box-shadow: 0 0 12px rgba(0, 255, 212, .4)
+            }
+
+            100% {
+                box-shadow: 0 0 30px rgba(180, 79, 255, .6), 0 0 60px rgba(0, 255, 212, .3)
+            }
+        }
+
+        .message {
+            position: absolute;
+            top: -22px;
+            left: 0;
+            font-size: 20px;
+            background: var(--teal);
+            color: var(--bg);
+            padding: 5px 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 212, .7);
+            transition: left 1.5s ease-in-out;
+        }
+
+        .ball {
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #fff, var(--teal));
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px var(--teal), 0 0 45px rgba(0, 255, 212, .45);
+            transition: left 1.5s ease;
+            z-index: 10;
+            animation: ballPulse 1.6s infinite;
+        }
+
+        @keyframes ballPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px var(--teal), 0 0 22px rgba(0, 255, 212, .3)
+            }
+
+            50% {
+                box-shadow: 0 0 30px var(--neon), 0 0 60px rgba(57, 255, 106, .45)
+            }
+        }
+
+        .controls {
+            margin: 30px 0 18px;
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            padding: 15px 30px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--teal), #00BFA5);
+            color: var(--bg);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            cursor: pointer;
+            transition: .3s;
+            box-shadow: 0 4px 20px rgba(0, 255, 212, .35);
+            letter-spacing: .5px;
+        }
+
+        .controls button:hover {
+            transform: scale(1.08) translateY(-4px);
+            box-shadow: 0 10px 35px rgba(0, 255, 212, .55);
+        }
+
+        #explain {
+            margin: 18px auto;
+            font-size: 15px;
+            color: var(--teal);
+            min-height: 44px;
+            max-width: 620px;
+            line-height: 1.75;
+            opacity: .85;
+        }
+
+        .result {
+            margin: 12px 0 30px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--neon);
+            text-shadow: 0 0 18px rgba(57, 255, 106, .4);
+            font-family: 'Orbitron', monospace;
+        }
+
+        .dh-section>button {
+            margin: 6px;
+            padding: 15px 24px;
+            border-radius: 12px;
+            border: 1px solid rgba(57, 255, 106, .25);
+            background: rgba(57, 255, 106, .06);
+            color: var(--neon);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: .3s;
+        }
+
+        .dh-section>button:hover {
+            background: rgba(57, 255, 106, .14);
+            box-shadow: 0 4px 22px rgba(57, 255, 106, .3);
+            transform: translateY(-3px);
+        }
+
+        /* COMPARISON */
+        .comparison-section {
+            margin: 60px 80px;
+            padding: 55px 50px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(10, 16, 28, .92), rgba(8, 16, 24, .88));
+            border: 1px solid rgba(0, 255, 212, .13);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .comparison-section::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 250px;
+            background: radial-gradient(ellipse, rgba(180, 79, 255, .07), transparent 70%);
+            pointer-events: none;
+        }
+
+        .cmp-header {
+            text-align: center;
+            margin-bottom: 38px;
+        }
+
+        .cmp-header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 58px;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--purple) 0%, var(--blue) 50%, var(--teal) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cmp-title-line {
+            display: block;
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--purple), var(--blue));
+            border-radius: 3px;
+            margin: 10px auto 16px;
+            box-shadow: 0 0 12px rgba(180, 79, 255, .5);
+        }
+
+        .cmp-subtitle {
+            font-size: 14px;
+            color: rgba(153, 158, 207, .6);
+            letter-spacing: 1.5px;
+        }
+
+        .cmp-tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 36px;
+            flex-wrap: wrap;
+        }
+
+        .cmp-tab {
+            padding: 10px 26px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 212, .2);
+            background: rgba(0, 255, 212, .04);
+            color: rgba(153, 158, 207, .7);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .3s;
+            letter-spacing: .4px;
+        }
+
+        .cmp-tab:hover {
+            color: var(--teal);
+            border-color: rgba(0, 255, 212, .4);
+        }
+
+        .cmp-tab.active {
+            background: rgba(0, 255, 212, .1);
+            border-color: rgba(0, 255, 212, .55);
+            color: var(--teal);
+            box-shadow: 0 0 20px rgba(0, 255, 212, .2);
+        }
+
+        .cmp-panel {
+            display: none;
+        }
+
+        .cmp-panel.active {
+            display: block;
+        }
+
+        .radar-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .radar-wrap {
+            position: relative;
+        }
+
+        #radarCanvas {
+            display: block;
+        }
+
+        .radar-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 16px;
+        
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 15px;
+            color: rgba(153, 158, 207, .75);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .axes-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .axes-legend span {
+            font-size: 12px;
+            padding: 4px 14px;
+            border-radius: 10px;
+            background: rgba(0, 255, 212, .05);
+            border: 1px solid rgba(0, 255, 212, .15);
+            color: rgba(0, 255, 212, .7);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .pills-label {
+            font-size: 16px;
+            color: rgba(153, 158, 207, .5);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .pills-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 24px;
+            
+        }
+
+        .algo-pill {
+            padding: 7px 16px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(153, 158, 207, .2);
+            background: rgba(10, 22, 40, .6);
+            color: rgba(153, 158, 207, .6);
+            transition: .25s;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .algo-pill.selected {
+            border-color: var(--c, var(--teal));
+            color: var(--c, var(--teal));
+            background: rgba(0, 255, 212, .08);
+            box-shadow: 0 0 12px rgba(0, 255, 212, .2);
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 16px;
+        }
+
+        .cmp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 16px;
+        }
+
+        .cmp-table thead tr {
+            background: rgba(0, 255, 212, .05);
+            border-bottom: 1px solid rgba(0, 255, 212, .15);
+        }
+
+        .cmp-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 17px;
+            font-weight: 700;
+            color: rgba(0, 255, 212, .8);
+            letter-spacing: .8px;
+            white-space: nowrap;
+        }
+
+        .cmp-table td {
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+            color: rgba(153, 158, 207, .8);
+            vertical-align: middle;
+        }
+
+        .cmp-table tbody tr:hover {
+            background: rgba(0, 255, 212, .04);
+        }
+
+        .score-pip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .pip {
+            width: 15px;
+            height: 8px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, .1);
+        }
+
+        .pip.on {
+            background: var(--c, var(--teal));
+        }
+
+        .type-badge {
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+
+        footer.site-footer {
+        position: relative;
+        z-index: 10;
+        background: rgba(5, 10, 20, 0.85);
+        backdrop-filter: blur(24px);
+        border-top: 1px solid rgba(0, 255, 212, .15);
+        padding: 56px 80px 40px;
+        margin-top: 60px;
+    }
+
+    .footer-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .footer-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 32px;
+        flex-wrap: wrap;
+        margin-bottom: 36px;
+    }
+
+    .footer-brand h2 {
+        font-family: 'Orbitron', monospace;
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        background: linear-gradient(90deg, var(--purple), var(--teal), var(--blue));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+    }
+
+    .footer-brand p {
+        font-size: 16px;
+        color: rgba(153, 158, 207, .5);
+        max-width: 300px;
+        line-height: 1.6;
+    }
+
+    .footer-team h4 {
+        font-family: 'Orbitron', monospace;
+        font-size: 14px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--teal);
+        margin-bottom: 14px;
+    }
+
+    .footer-team ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        gap: 20px;
+    }
+
+    .footer-team ul li {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 16px;
+        font-weight: 500;
+        color: rgba(153, 158, 207, .8);
+        transition: color .25s;
+    }
+
+    .footer-team ul li.member-teal:hover   { color: var(--teal); }
+    .footer-team ul li.member-purple:hover { color: var(--purple); }
+    .footer-team ul li.member-pink:hover   { color: var(--pink); }
+
+    .member-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 800;
+        font-family: 'Orbitron', monospace;
+        flex-shrink: 0;
+    }
+
+    .avatar-teal   { background: rgba(0,255,212,.12); border: 1px solid rgba(0,255,212,.35); color: var(--teal); }
+    .avatar-purple { background: rgba(180,79,255,.12); border: 1px solid rgba(180,79,255,.35); color: var(--purple); }
+    .avatar-pink   { background: rgba(255,79,216,.12); border: 1px solid rgba(255,79,216,.35); color: var(--pink); }
+
+    .footer-divider {
+        border: none;
+        border-top: 1px solid rgba(0, 255, 212, .08);
+        margin: 0 0 22px;
+    }
+
+    .footer-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .footer-bottom p {
+        font-size: 15px;
+        color: rgba(153, 158, 207, .35);
+    }
+
+    .footer-bottom span { color: var(--teal); font-weight: 600; }
+
+    .footer-socials { display: flex; gap: 12px; }
+
+    .footer-socials a {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 1px solid rgba(0,255,212,.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(153,158,207,.45);
+        font-size: 16px;
+        transition: all .3s;
+        text-decoration: none;
+    }
+
+    .footer-socials a:hover {
+        border-color: var(--teal);
+        color: var(--teal);
+        box-shadow: 0 0 12px rgba(0,255,212,.2);
+        transform: translateY(-2px);
+    }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <h1>CryptoCore</h1>
+        <nav>
+            <a href="#hero">HOME</a>
+            <a href="#about">ABOUT</a>
+            <a href="#algorithmSection">Algorithms</a>
+            <a href="#dh">DH</a>
+            <a href="#footer">Contact Us</a>
+            <button>Sign in</button>
+        </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+        <div class="floating-cards">
+            <canvas id="dotsCanvas"
+                style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;"></canvas>
+            <div class="algo-card c-teal">
+                <div class="card-label">AES Cipher</div>
+            </div>
+            <div class="algo-card c-purple">
+                <div class="card-label">RSA Cipher</div>
+            </div>
+            <div class="algo-card c-neon">
+                <div class="card-label">Vigenere</div>
+            </div>
+            <div class="algo-card c-pink">
+                <div class="card-label">Hill Cipher</div>
+            </div>
+            <div class="algo-card c-blue">
+                <div class="card-label">Rail Fence</div>
+            </div>
+            <div class="algo-card c-teal">
+                <div class="card-label">DES Cipher</div>
+            </div>
+            <div class="algo-card c-purple">
+                <div class="card-label">Hash Function</div>
+            </div>
+            <div class="algo-card c-neon">
+                <div class="card-label">OTP Cipher</div>
+            </div>
+            <div class="algo-card c-pink">
+                <div class="card-label">Affine Cipher</div>
+            </div>
+            <div class="algo-card c-blue">
+                <div class="card-label">Columnar</div>
+            </div>
+            <div class="algo-card c-teal">
+                <div class="card-label">Caesar Cipher</div>
+            </div>
+            <div class="algo-card c-purple">
+                <div class="card-label">Monoalphabic</div>
+            </div>
+        </div>
+        <div class="hero-container">
+            <div class="hero-wrap">
+                <div id="title" style="
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(30px, 5vw, 60px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--purple) 40%, #C8D8F0 30%, var(--teal) 60%, var(--neon) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+  "></div>
+                <p id="titleh1" style="display:none">Encryption & Decryption</p>
+            </div>
+
+            <button type="button"
+                onclick="document.getElementById('algorithmSection').scrollIntoView({behavior: 'smooth'})">Start</button>
+        </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="about" id="about">
+        <div class="about-encrypt">
+            <h2>Encryption <i class="fa-solid fa-lock" style="color:var(--teal)"></i></h2>
+            <h5>Protecting Data</h5>
+            <p>Encryption is the process of converting readable data or information into an unreadable form using an
+                algorithm and a secret key to protect it from unauthorized access.</p>
+            <ul>
+                <li>Protects sensitive data</li>
+                <li>Used in secure systems</li>
+                <li>Keeps information private</li>
+            </ul>
+        </div>
+        <div class="about-decrypt">
+            <h2>Decryption <i class="fa-solid fa-unlock" style="color:var(--neon)"></i></h2>
+            <h5>Restoring Data</h5>
+            <p>Decryption is the process of converting encrypted data back into its original readable form using the
+                correct key.
+                It is the reverse process of encryption.</p>
+            <ul>
+                <li>Returns data to normal</li>
+                <li>Requires a secret key</li>
+                <li>Used to read messages</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ALGORITHM ORBITAL -->
+    <section class="algorithm" id="algorithmSection">
+        <div class="aw">
+            <div class="inn">
+                <div class="sh">
+                    <h1>Algorithms</h1>
+                    <span class="tl"></span>
+                </div>
+                <div class="flt" id="fb">
+                    <button class="fb on" data-f="all">All</button>
+                    <button class="fb" data-f="classical">Classical</button>
+                    <button class="fb" data-f="block">Block</button>
+                    <button class="fb" data-f="modern">Modern</button>
+                    <button class="fb" data-f="transposition">Transposition</button>
+                    <button class="fb" data-f="hash">Hash</button>
+                </div>
+
+                <div class="ow" id="ow">
+                    <svg viewBox="0 0 1100 1100" xmlns="http://www.w3.org/2000/svg" id="orbitalSvg">
+                        <defs>
+                            <radialGradient id="hubG" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#00FFD4" stop-opacity="0.2" />
+                                <stop offset="100%" stop-color="#B44FFF" stop-opacity="0.07" />
+                            </radialGradient>
+                            <radialGradient id="gT" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#00FFD4" stop-opacity="0.45" />
+                                <stop offset="100%" stop-color="#00FFD4" stop-opacity="0" />
+                            </radialGradient>
+                            <radialGradient id="gP" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#B44FFF" stop-opacity="0.45" />
+                                <stop offset="100%" stop-color="#B44FFF" stop-opacity="0" />
+                            </radialGradient>
+                            <radialGradient id="gN" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#39FF6A" stop-opacity="0.42" />
+                                <stop offset="100%" stop-color="#39FF6A" stop-opacity="0" />
+                            </radialGradient>
+                            <radialGradient id="gB" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#4FC3FF" stop-opacity="0.42" />
+                                <stop offset="100%" stop-color="#4FC3FF" stop-opacity="0" />
+                            </radialGradient>
+                            <radialGradient id="gA" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#FFB84F" stop-opacity="0.42" />
+                                <stop offset="100%" stop-color="#FFB84F" stop-opacity="0" />
+                            </radialGradient>
+                            <filter id="f6o">
+                                <feGaussianBlur stdDeviation="7" />
+                            </filter>
+                            <filter id="f3o">
+                                <feGaussianBlur stdDeviation="4" />
+                            </filter>
+                        </defs>
+
+                        <!-- Ambient glows -->
+                        <ellipse cx="180" cy="180" rx="280" ry="280" fill="#00FFD4" fill-opacity="0.04"
+                            filter="url(#f6o)" />
+                        <ellipse cx="920" cy="920" rx="280" ry="280" fill="#B44FFF" fill-opacity="0.05"
+                            filter="url(#f6o)" />
+                        <ellipse cx="550" cy="550" rx="200" ry="200" fill="url(#hubG)" filter="url(#f6o)" />
+
+                        <!-- Rotating rings -->
+                        <circle cx="550" cy="550" r="430" fill="none" stroke="#00FFD4" stroke-width="1"
+                            stroke-opacity="0.1" stroke-dasharray="6 14">
+                            <animateTransform attributeName="transform" type="rotate" from="0 550 550" to="360 550 550"
+                                dur="90s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="550" cy="550" r="245" fill="none" stroke="#B44FFF" stroke-width="1"
+                            stroke-opacity="0.1" stroke-dasharray="4 12">
+                            <animateTransform attributeName="transform" type="rotate" from="360 550 550" to="0 550 550"
+                                dur="55s" repeatCount="indefinite" />
+                        </circle>
+
+                        <!-- Spoke lines -->
+                        <g id="spokeLines" stroke-opacity="0.12" stroke-width="1.4">
+                            <line x1="550" y1="550" x2="980" y2="550" stroke="#B44FFF" />
+                            <line x1="550" y1="550" x2="765" y2="922" stroke="#4FC3FF" />
+                            <line x1="550" y1="550" x2="335" y2="922" stroke="#FFB84F" />
+                            <line x1="550" y1="550" x2="120" y2="550" stroke="#00FFD4" />
+                            <line x1="550" y1="550" x2="335" y2="178" stroke="#39FF6A" />
+                            <line x1="550" y1="550" x2="765" y2="178" stroke="#00FFD4" />
+                            <line x1="550" y1="550" x2="762" y2="427" stroke="#00FFD4" />
+                            <line x1="550" y1="550" x2="550" y2="305" stroke="#B44FFF" />
+                            <line x1="550" y1="550" x2="338" y2="427" stroke="#39FF6A" />
+                            <line x1="550" y1="550" x2="338" y2="673" stroke="#4FC3FF" />
+                            <line x1="550" y1="550" x2="550" y2="795" stroke="#00FFD4" />
+                            <line x1="550" y1="550" x2="762" y2="673" stroke="#FFB84F" />
+                        </g>
+
+                        <!-- OUTER RING NODES -->
+
+                        <g data-page="aes.html" data-cat="block" style="cursor:pointer">
+                            <g transform="translate(980,550)">
+                                <circle r="68" fill="url(#gP)" filter="url(#f6o)" />
+                                <circle r="50" fill="rgba(10,22,40,0.93)" stroke="#B44FFF" stroke-width="3"
+                                    stroke-opacity="0.75" />
+                                <circle r="50" fill="none" stroke="#B44FFF" stroke-width="1.5" stroke-opacity="0.3"
+                                    stroke-dasharray="3 5">
+                                    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="8s"
+                                        repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="10" text-anchor="middle" fill="#B44FFF" font-family="Orbitron,monospace"
+                                    font-size="22" font-weight="900">AES</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="des.html" data-cat="block" style="cursor:pointer">
+                            <g transform="translate(765,922)">
+                                <circle r="63" fill="url(#gP)" filter="url(#f6o)" />
+                                <circle r="47" fill="rgba(10,22,40,0.93)" stroke="#B44FFF" stroke-width="3"
+                                    stroke-opacity="0.7" />
+                                <circle r="47" fill="none" stroke="#B44FFF" stroke-width="1.5" stroke-opacity="0.28"
+                                    stroke-dasharray="3 5">
+                                    <animateTransform attributeName="transform" type="rotate" from="360" to="0"
+                                        dur="13s" repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="10" text-anchor="middle" fill="#B44FFF" font-family="Orbitron,monospace"
+                                    font-size="22" font-weight="900">DES</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="hash.html" data-cat="hash" style="cursor:pointer">
+                            <g transform="translate(335,922)">
+                                <circle r="52" fill="url(#gA)" filter="url(#f6o)" />
+                                <circle r="49" fill="rgba(10,22,40,0.93)" stroke="#FFB84F" stroke-width="3"
+                                    stroke-opacity="0.7" />
+                                <circle r="49" fill="none" stroke="#FFB84F" stroke-width="1.5" stroke-opacity="0.28"
+                                    stroke-dasharray="2 5">
+                                    <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+                                        dur="16s" repeatCount="indefinite"/>
+                                </circle>
+                                <text x="0" y="10" text-anchor="middle" fill="#FFB84F" font-family="Orbitron,monospace"
+                                    font-size="20" font-weight="900">HASH</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="otp.html" data-cat="classical" style="cursor:pointer">
+                            <g transform="translate(120,550)">
+                                <circle r="52" fill="url(#gT)" filter="url(#f6o)" />
+                                <circle r="49" fill="rgba(10,22,40,0.93)" stroke="#00FFD4" stroke-width="3"
+                                    stroke-opacity="0.7" />
+                                <circle r="49" fill="none" stroke="#00FFD4" stroke-width="1.5" stroke-opacity="0.28"
+                                    stroke-dasharray="2 5">
+                                    <animateTransform attributeName="transform" type="rotate" from="360" to="0"
+                                        dur="14s" repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="10" text-anchor="middle" fill="#00FFD4" font-family="Orbitron,monospace"
+                                    font-size="22" font-weight="900">OTP</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="rsa.html" data-cat="modern" style="cursor:pointer">
+                            <g transform="translate(335,178)">
+                                <circle r="52" fill="url(#gN)" filter="url(#f6o)" />
+                                <circle r="49" fill="rgba(10,22,40,0.93)" stroke="#4FC3FF" stroke-width="3"
+                                    stroke-opacity="0.7" />
+                                <circle r="49" fill="none" stroke="#4FC3FF" stroke-width="1.5" stroke-opacity="0.28"
+                                    stroke-dasharray="3 6">
+                                    <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+                                        dur="10s" repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="10" text-anchor="middle" fill="#4FC3FF" font-family="Orbitron,monospace"
+                                    font-size="22" font-weight="900">RSA</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="Vigenere.html" data-cat="classical" style="cursor:pointer">
+                            <g transform="translate(765,178)">
+                                <circle r="63" fill="url(#gT)" filter="url(#f6o)" />
+                                <circle r="47" fill="rgba(10,22,40,0.93)" stroke="#00FFD4" stroke-width="3"
+                                    stroke-opacity="0.7" />
+                                <circle r="47" fill="none" stroke="#00FFD4" stroke-width="1.5" stroke-opacity="0.28"
+                                    stroke-dasharray="2 5">
+                                    <animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="9s"
+                                        repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="10" text-anchor="middle" fill="#00FFD4" font-family="Orbitron,monospace"
+                                    font-size="19" font-weight="900">VIG</text>
+
+                            </g>
+                        </g>
+
+                        <!-- INNER RING NODES -->
+
+                        <g data-page="ceaser.html" data-cat="classical" style="cursor:pointer">
+                            <g transform="translate(762,673)">
+                                <circle r="55" fill="url(#gT)" filter="url(#f3o)" />
+                                <circle r="42" fill="rgba(10,22,40,0.93)" stroke="#00FFD4" stroke-width="3"
+                                    stroke-opacity="0.72" />
+                                <circle r="42" fill="none" stroke="#00FFD4" stroke-width="1.5" stroke-opacity="0.32"
+                                    stroke-dasharray="2 4">
+                                    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s"
+                                        repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="8" text-anchor="middle" fill="#00FFD4" font-family="Orbitron,monospace"
+                                    font-size="18" font-weight="900">CEA</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="rail_fence.html" data-cat="transposition" style="cursor:pointer">
+                            <g transform="translate(550,795)">
+                                <circle r="55" fill="url(#gB)" filter="url(#f3o)" />
+                                <circle r="42" fill="rgba(10,22,40,0.93)" stroke="#4FC3FF" stroke-width="3"
+                                    stroke-opacity="0.72" />
+                                <circle r="42" fill="none" stroke="#4FC3FF" stroke-width="1.5" stroke-opacity="0.32"
+                                    stroke-dasharray="3 5">
+                                    <animateTransform attributeName="transform" type="rotate" from="360" to="0" dur="7s"
+                                        repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="8" text-anchor="middle" fill="#4FC3FF" font-family="Orbitron,monospace"
+                                    font-size="18" font-weight="900">RAIL</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="affine.html" data-cat="classical" style="cursor:pointer">
+                            <g transform="translate(338,673)">
+                                <circle r="52" fill="url(#gT)" filter="url(#f3o)" />
+                                <circle r="40" fill="rgba(10,22,40,0.93)" stroke="#00FFD4" stroke-width="3"
+                                    stroke-opacity="0.72" />
+                                <circle r="40" fill="none" stroke="#00FFD4" stroke-width="1.5" stroke-opacity="0.32"
+                                    stroke-dasharray="2 4">
+                                    <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="5s"
+                                        repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="8" text-anchor="middle" fill="#00FFD4" font-family="Orbitron,monospace"
+                                    font-size="18" font-weight="900">AFF</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="col_trans.html" data-cat="transposition" style="cursor:pointer">
+                            <g transform="translate(338,427)">
+                                <circle r="52" fill="url(#gB)" filter="url(#f3o)" />
+                                <circle r="40" fill="rgba(10,22,40,0.93)" stroke="#39FF6A" stroke-width="3"
+                                    stroke-opacity="0.72" />
+                                <circle r="40" fill="none" stroke="#39FF6A" stroke-width="1.5" stroke-opacity="0.32"
+                                    stroke-dasharray="3 6">
+                                    <animateTransform attributeName="transform" type="rotate" from="360" to="0"
+                                        dur="11s" repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="8" text-anchor="middle" fill="#39FF6A" font-family="Orbitron,monospace"
+                                    font-size="17" font-weight="900">COL</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="hill.html" data-cat="classical" style="cursor:pointer">
+                            <g transform="translate(550,305)">
+                                <circle r="55" fill="url(#gT)" filter="url(#f3o)" />
+                                <circle r="42" fill="rgba(10,22,40,0.93)" stroke="#00FFD4" stroke-width="3"
+                                    stroke-opacity="0.72" />
+                                <circle r="42" fill="none" stroke="#00FFD4" stroke-width="1.5" stroke-opacity="0.32"
+                                    stroke-dasharray="2 5">
+                                    <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+                                        dur="12s" repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="8" text-anchor="middle" fill="#00FFD4" font-family="Orbitron,monospace"
+                                    font-size="18" font-weight="900">HILL</text>
+
+                            </g>
+                        </g>
+
+                        <g data-page="Mono.html" data-cat="classical" style="cursor:pointer">
+                            <g transform="translate(762,427)">
+                                <circle r="52" fill="url(#gT)" filter="url(#f3o)" />
+                                <circle r="40" fill="rgba(10,22,40,0.93)" stroke="#00FFD4" stroke-width="3"
+                                    stroke-opacity="0.72" />
+                                <circle r="40" fill="none" stroke="#00FFD4" stroke-width="1.5" stroke-opacity="0.32"
+                                    stroke-dasharray="2 4">
+                                    <animateTransform attributeName="transform" type="rotate" from="360" to="0"
+                                        dur="10s" repeatCount="indefinite" />
+                                </circle>
+                                <text x="0" y="8" text-anchor="middle" fill="#00FFD4" font-family="Orbitron,monospace"
+                                    font-size="16" font-weight="900">MONO</text>
+
+                            </g>
+                        </g>
+
+                        <!-- PARTICLES -->
+                        <g>
+                            <animateTransform attributeName="transform" type="rotate" from="0 550 550" to="360 550 550"
+                                dur="20s" repeatCount="indefinite" />
+                            <circle cx="980" cy="550" r="7" fill="#00FFD4" fill-opacity="0.9">
+                                <animate attributeName="r" values="7;4;7" dur="3s" repeatCount="indefinite" />
+                            </circle>
+                        </g>
+                        <g>
+                            <animateTransform attributeName="transform" type="rotate" from="180 550 550"
+                                to="540 550 550" dur="20s" repeatCount="indefinite" />
+                            <circle cx="980" cy="550" r="6" fill="#B44FFF" fill-opacity="0.85">
+                                <animate attributeName="r" values="6;3;6" dur="4s" repeatCount="indefinite" />
+                            </circle>
+                        </g>
+                        <g>
+                            <animateTransform attributeName="transform" type="rotate" from="0 550 550" to="360 550 550"
+                                dur="12s" repeatCount="indefinite" />
+                            <circle cx="795" cy="550" r="5" fill="#4FC3FF" fill-opacity="0.8">
+                                <animate attributeName="r" values="5;2.5;5" dur="2.5s" repeatCount="indefinite" />
+                            </circle>
+                        </g>
+                        <g>
+                            <animateTransform attributeName="transform" type="rotate" from="180 550 550"
+                                to="540 550 550" dur="12s" repeatCount="indefinite" />
+                            <circle cx="795" cy="550" r="5" fill="#FFB84F" fill-opacity="0.75">
+                                <animate attributeName="r" values="5;2.5;5" dur="3.5s" repeatCount="indefinite" />
+                            </circle>
+                        </g>
+
+                        <!-- CENTER HUB -->
+                        <circle cx="550" cy="550" r="72" fill="rgba(10,22,40,0.92)" stroke="#00FFD4" stroke-width="2.5"
+                            stroke-opacity="0.4" />
+                        <circle cx="550" cy="550" r="72" fill="none" stroke="#00FFD4" stroke-width="1.2"
+                            stroke-opacity="0.15" stroke-dasharray="5 9">
+                            <animateTransform attributeName="transform" type="rotate" from="0 550 550" to="360 550 550"
+                                dur="20s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="550" cy="550" r="72" fill="rgba(0,255,212,0.07)" stroke="#00FFD4" stroke-width="1.8"
+                            stroke-opacity="0.5" />
+                        <text x="550" y="543" text-anchor="middle" fill="#00FFD4" font-family="Orbitron,monospace"
+                            font-size="13" font-weight="900" letter-spacing="1.5">EXPLORE</text>
+                        <text x="550" y="562" text-anchor="middle" fill="#00FFD4" font-family="Orbitron,monospace"
+                            font-size="13" font-weight="900" letter-spacing="1.5">THE CORE</text>
+                        <circle cx="550" cy="550" r="95" fill="none" stroke="#00FFD4" stroke-width="14"
+                            stroke-opacity="0">
+                            <animate attributeName="r" values="95;155;95" dur="4s" repeatCount="indefinite" />
+                            <animate attributeName="stroke-opacity" values="0.1;0;0.1" dur="4s"
+                                repeatCount="indefinite" />
+                        </circle>
+                    </svg>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- DH SECTION -->
+    <section class="dh-section" id="dh">
+        <h2>Diffie Hellman Interactive</h2>
+        <div class="inputs">
+            <input type="number" id="p" placeholder="Prime (p)">
+            <input type="number" id="g" placeholder="Base (g)">
+            <input type="number" id="a" placeholder="User1 Private">
+            <input type="number" id="b" placeholder="User2 Private">
+        </div>
+        <div class="dh-container">
+            <div class="person">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <h3>User1</h3>
+                <p>A = <span id="A">?</span></p>
+            </div>
+            <div class="line">
+                <div class="glow-line"></div>
+                <div class="message" id="msg"><i class="fa-solid fa-envelope"></i></div>
+            </div>
+            <div class="person">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <h3>User2</h3>
+                <p>B = <span id="B">?</span></p>
+            </div>
+        </div>
+        <div class="controls">
+            <button onclick="step1()">Generate Public</button>
+            <button onclick="step2()">Exchange</button>
+            <button onclick="step3()">Secret Key</button>
+        </div>
+        <div id="explain"></div>
+        <div class="result">Secret: <span id="secret">?</span></div>
+        <button onclick="goToAlgoCeaser()">Use Key in Caesar</button>
+        <button onclick="goToAlgoRail()">Use Key in Rail Fence</button>
+        <button onclick="goToAlgoAffine()">Use Key in Affine</button>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="comparison-section">
+        <div class="cmp-header">
+            <h1>Algorithm Comparison</h1>
+            <span class="cmp-title-line"></span>
+        </div>
+        <div class="cmp-tabs">
+            <button class="cmp-tab active" onclick="switchTab('radar')">Radar Chart</button>
+            <button class="cmp-tab" onclick="switchTab('table')">Full Table</button>
+        </div>
+        <div class="cmp-panel active" id="tab-radar">
+            <div class="radar-layout">
+                <div>
+                    <p class="pills-label">Select algorithms to compare (max 4)</p>
+                    <div class="pills-wrap" id="radarPills"></div>
+                </div>
+                <div class="radar-wrap">
+                    <canvas id="radarCanvas" width="600" height="600"></canvas>
+                    <div class="radar-legend" id="radarLegend"></div>
+                </div>
+            </div>
+            
+        </div>
+        <div class="cmp-panel" id="tab-table">
+            <div class="table-wrap">
+                <table class="cmp-table">
+                    <thead>
+                        <tr>
+                            <th>Algorithm</th>
+                            <th>Security</th>
+                            <th>Speed</th>
+                            <th>Key Size</th>
+                            <th>Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cmpTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    <footer class="site-footer" id="footer">
+    <div class="footer-inner">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <h2>CryptoCore</h2>
+                <p>Exploring cryptography from classical ciphers to modern encryption.</p>
+            </div>
+            <div class="footer-team">
+                <h4>Team Members</h4>
+                <ul>
+                    <li class="member-teal">
+                        <div class="member-avatar avatar-teal">SK</div>
+                        Shahd Khalil
+                    </li>
+                    <li class="member-purple">
+                        <div class="member-avatar avatar-purple">SM</div>
+                        Safa Magdy
+                    </li>
+                    <li class="member-pink">
+                        <div class="member-avatar avatar-pink">SA</div>
+                        Salma Ahmed
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="footer-divider">
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 <span> CryptoCore</span>. Built with passion for cryptography.</p>
+            <div class="footer-socials">
+                <a href="#"><i class="fa-brands fa-github"></i></a>
+                <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                <a href="#"><i class="fa-solid fa-envelope"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+    <script>
+        const ORIGINAL = document.getElementById('titleh1').textContent.trim();
+        const SHIFT = 7;
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        function caesarChar(ch, shift) {
+            if (ch >= 'A' && ch <= 'Z') return String.fromCharCode((ch.charCodeAt(0) - 65 + shift) % 26 + 65);
+            if (ch >= 'a' && ch <= 'z') return String.fromCharCode((ch.charCodeAt(0) - 97 + shift) % 26 + 97);
+            return ch;
+        }
+
+        function caesarStep(ch, currentShift) {
+            if (ch >= 'A' && ch <= 'Z') return String.fromCharCode((ch.charCodeAt(0) - 65 + currentShift) % 26 + 65);
+            if (ch >= 'a' && ch <= 'z') return String.fromCharCode((ch.charCodeAt(0) - 97 + currentShift) % 26 + 97);
+            return ch;
+        }
+
+        const titleEl = document.getElementById('title');
+        let spans = [];
+
+        spans = Array.from(ORIGINAL).map(ch => {
+            const s = document.createElement('span');
+            s.className = 'char';
+            s.textContent = ch === ' ' ? '\u00A0' : ch;
+            if (ch === ' ') s.style.minWidth = '0.5em';
+            titleEl.appendChild(s);
+            return s;
+        });
+
+        const nonSpace = spans.map((_, i) => i).filter(i => ORIGINAL[i] !== ' ' && ORIGINAL[i] !== '&');
+
+        async function run() {
+            const encOrder = [...nonSpace].sort(() => Math.random() - 0.5);
+            const locked = new Array(ORIGINAL.length).fill(false);
+
+            let noiseTick = 0;
+            const noiseId = setInterval(() => {
+                noiseTick = (noiseTick + 1) % SHIFT;
+                spans.forEach((sp, i) => {
+                    if (!locked[i] && ORIGINAL[i] !== ' ' && ORIGINAL[i] !== '&') {
+                        sp.textContent = caesarStep(ORIGINAL[i], noiseTick + 1);
+                        sp.className = 'char encrypting';
+                    }
+                });
+            }, 40);
+
+            for (let k = 0; k < encOrder.length; k++) {
+                await sleep(30 + Math.random() * 20);
+                const i = encOrder[k];
+                locked[i] = true;
+                spans[i].textContent = caesarChar(ORIGINAL[i], SHIFT);
+                spans[i].className = 'char encrypted';
+            }
+            clearInterval(noiseId);
+            spans.forEach((sp, i) => {
+                if (!locked[i] && ORIGINAL[i] !== ' ' && ORIGINAL[i] !== '&') {
+                    sp.textContent = caesarChar(ORIGINAL[i], SHIFT);
+                    sp.className = 'char encrypted';
+                }
+            });
+
+            await sleep(400);
+
+            const decOrder = [...nonSpace].sort(() => Math.random() - 0.5);
+            const decrypted = new Array(ORIGINAL.length).fill(false);
+
+            let decTick = SHIFT;
+            const decId = setInterval(() => {
+                decTick = decTick > 0 ? decTick - 1 : SHIFT;
+                spans.forEach((sp, i) => {
+                    if (!decrypted[i] && ORIGINAL[i] !== ' ' && ORIGINAL[i] !== '&') {
+                        sp.textContent = caesarStep(ORIGINAL[i], decTick);
+                        sp.className = 'char decrypting';
+                    }
+                });
+            }, 40);
+
+            for (let k = 0; k < decOrder.length; k++) {
+                await sleep(28 + Math.random() * 18);
+                const i = decOrder[k];
+                decrypted[i] = true;
+                spans[i].textContent = ORIGINAL[i];
+                spans[i].className = 'char';
+                spans[i].style.color = '';
+            }
+            clearInterval(decId);
+
+            spans.forEach((sp, i) => {
+                sp.textContent = ORIGINAL[i] === ' ' ? '\u00A0' : ORIGINAL[i];
+                sp.className = 'char';
+                sp.style.color = '';
+            });
+        }
+
+        setTimeout(run, 500);
+
+
+        const ALGOS = [
+            { id: 'caesar', name: 'Caesar', abbr: 'CA', cat: 'classical', sub: 'Substitution', typeColor: '#00FFD4',  security: 1, speed: 10,  keySize: 1, usage: 2,  keyInfo: '1–25 shift'},
+            { id: 'mono', name: 'Monoalph.', abbr: 'MO', cat: 'classical', sub: 'Substitution', typeColor: '#00FFD4',  security: 2, speed: 9,  keySize: 3, usage: 2,  keyInfo: '26! permutations'},
+            { id: 'vigenere', name: 'Vigenère', abbr: 'VG', cat: 'classical', sub: 'Polyalphabetic', typeColor: '#00FFD4',  security: 3, speed: 8,  keySize: 4, usage: 3, keyInfo: 'Variable keyword'},
+            { id: 'hill', name: 'Hill', abbr: 'HL', cat: 'classical', sub: 'Polygraphic', typeColor: '#FF4FD8',  security: 4, speed: 6, keySize: 5, usage: 3,  keyInfo: 'n×n matrix'},
+            { id: 'affine', name: 'Affine', abbr: 'AF', cat: 'classical', sub: 'Substitution', typeColor: '#00FFD4',  security: 2, speed: 9, keySize: 2, usage: 2,  keyInfo: 'a,b ∈ Z₂₆'},
+            { id: 'otp', name: 'OTP', abbr: 'OTP', cat: 'classical', sub: 'Unbreakable', typeColor: '#00FFD4',  security: 10, speed: 7, keySize: 10, usage: 3,  keyInfo: 'Key = msg length'},
+            { id: 'rail', name: 'Rail Fence', abbr: 'RF', cat: 'transposition', sub: 'Transposition', typeColor: '#4FC3FF', security: 2, speed: 9, keySize: 1, usage: 2, keyInfo: 'Number of rails'},
+            { id: 'columnar', name: 'Columnar', abbr: 'CO', cat: 'transposition', sub: 'Transposition', typeColor: '#4FC3FF', security: 3, speed: 8, keySize: 3, usage: 3,  keyInfo: 'Column keyword'},
+            { id: 'aes', name: 'AES', abbr: 'AES', cat: 'block', sub: 'Block Cipher', typeColor: '#B44FFF', security: 10, speed: 9, keySize: 8, usage: 10,  keyInfo: '128/192/256-bit'},
+            { id: 'des', name: 'DES', abbr: 'DES', cat: 'block', sub: 'Block Cipher', typeColor: '#B44FFF', security: 4, speed: 7, keySize: 4, usage: 4,  keyInfo: '56-bit key'},
+            { id: 'rsa', name: 'RSA', abbr: 'RSA', cat: 'modern', sub: 'Public Key', typeColor: '#39FF6A', security: 9, speed: 3, keySize: 9, usage: 10,  keyInfo: '2048–4096 bit'},
+            { id: 'hash', name: 'Hash SHA-256', abbr: 'SHA', cat: 'hash', sub: 'Hash Function', typeColor: '#FFB84F', security: 10, speed: 8, keySize: 0, usage: 10,  keyInfo: 'No key (digest)'},
+        ];
+
+        const ORBITAL_COLORS = ['#00FFD4', '#B44FFF', '#39FF6A', '#FF4FD8', '#4FC3FF', '#FFD700', '#FF6B6B', '#A8FF78'];
+        const AXES = ['security', 'speed',  'keySize', 'usage'];
+
+        let currentFilter = 'all';
+
+        const tooltip = document.createElement('div');
+        tooltip.className = 'orb-tooltip';
+        document.body.appendChild(tooltip);
+
+        const ALGO_NAMES = {
+            'ceaser.html': 'Open Caesar', 'Mono.html': 'Open Monoalphabetic',
+            'Vigenere.html': 'Open Vigenère', 'hill.html': 'Open Hill',
+            'affine.html': 'Open Affine', 'otp.html': 'Open OTP',
+            'rail_fence.html': 'Open Rail Fence', 'col_trans.html': 'Open Columnar Transposition',
+            'aes.html': 'Open AES', 'des.html': 'Open DES',
+            'rsa.html': 'Open RSA', 'hash.html': 'Open Hash (SHA-256)',
+        };
+
+        function applyFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('#orbitalSvg g[data-page]').forEach(node => {
+                const cat = node.getAttribute('data-cat');
+                const show = filter === 'all' || cat === filter;
+                node.style.opacity = show ? '1' : '0.08';
+                node.style.pointerEvents = show ? 'auto' : 'none';
+                node.style.transition = 'opacity 0.4s ease';
+            });
+        }
+
+        document.querySelectorAll('#orbitalSvg g[data-page]').forEach(node => {
+            node.addEventListener('click', () => { const page = node.getAttribute('data-page'); if (page) window.location.href = page; });
+            node.addEventListener('mouseenter', (e) => {
+                const page = node.getAttribute('data-page');
+                tooltip.textContent = ALGO_NAMES[page] || 'Open';
+                tooltip.classList.add('show');
+                tooltip.style.left = e.clientX + 'px';
+                tooltip.style.top = (e.clientY - 50) + 'px';
+            });
+            node.addEventListener('mousemove', (e) => { tooltip.style.left = e.clientX + 'px'; tooltip.style.top = (e.clientY - 50) + 'px'; });
+            node.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+        });
+
+        document.getElementById('fb').addEventListener('click', e => {
+            const btn = e.target.closest('.fb');
+            if (!btn || !btn.dataset.f) return;
+            document.querySelectorAll('.fb').forEach(x => x.classList.remove('on'));
+            btn.classList.add('on');
+            applyFilter(btn.dataset.f);
+        });
+
+        let selectedAlgos = ['aes', 'rsa', 'des', 'otp'];
+
+        function buildPills() {
+            const wrap = document.getElementById('radarPills');
+            wrap.innerHTML = '';
+            ALGOS.forEach(a => {
+                const btn = document.createElement('button');
+                btn.className = 'algo-pill' + (selectedAlgos.includes(a.id) ? ' selected' : '');
+                btn.style.setProperty('--c', a.typeColor);
+                btn.textContent = a.name;
+                btn.onclick = () => {
+                    if (selectedAlgos.includes(a.id)) { if (selectedAlgos.length > 1) selectedAlgos = selectedAlgos.filter(x => x !== a.id); }
+                    else { if (selectedAlgos.length < 4) selectedAlgos.push(a.id); }
+                    buildPills(); drawRadar();
+                };
+                wrap.appendChild(btn);
+            });
+        }
+
+        function drawRadar() {
+            const canvas = document.getElementById('radarCanvas');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 60;
+            const N = AXES.length;
+            ctx.clearRect(0, 0, W, H);
+            for (let r = 1; r <= 5; r++) {
+                ctx.beginPath();
+                for (let i = 0; i < N; i++) {
+                    const a = (i / N) * Math.PI * 2 - Math.PI / 2;
+                    const x = cx + Math.cos(a) * (R * r / 5), y = cy + Math.sin(a) * (R * r / 5);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = r === 5 ? 'rgba(0,255,212,0.2)' : 'rgba(255,255,255,0.05)';
+                ctx.lineWidth = r === 5 ? 1.5 : 1; ctx.stroke();
+            }
+            const lbls = { security: 'Security', speed: 'Speed', keySize: 'Key Size', usage: 'Usage'};
+            AXES.forEach((ax, i) => {
+                const a = (i / N) * Math.PI * 2 - Math.PI / 2;
+                ctx.beginPath(); ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+                ctx.strokeStyle = 'rgba(0,255,212,0.15)'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.fillStyle = 'rgba(153,158,207,0.7)';
+                ctx.font = 'bold 15px "Space Grotesk",sans-serif';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(lbls[ax], cx + Math.cos(a) * (R + 28), cy + Math.sin(a) * (R + 28));
+            });
+            const sel = ALGOS.filter(a => selectedAlgos.includes(a.id));
+            sel.forEach((algo, idx) => {
+                const color = ORBITAL_COLORS[idx % ORBITAL_COLORS.length];
+                ctx.beginPath();
+                AXES.forEach((ax, i) => {
+                    const val = algo[ax] / 10, a = (i / N) * Math.PI * 2 - Math.PI / 2;
+                    const x = cx + Math.cos(a) * R * val, y = cy + Math.sin(a) * R * val;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.closePath(); ctx.fillStyle = color + '28'; ctx.fill();
+                ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+                AXES.forEach((ax, i) => {
+                    const val = algo[ax] / 10, a = (i / N) * Math.PI * 2 - Math.PI / 2;
+                    ctx.beginPath(); ctx.arc(cx + Math.cos(a) * R * val, cy + Math.sin(a) * R * val, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = color; ctx.fill();
+                });
+            });
+            document.getElementById('radarLegend').innerHTML = sel.map((a, i) =>
+                `<div class="legend-item"><div class="legend-dot" style="background:${ORBITAL_COLORS[i % ORBITAL_COLORS.length]}"></div>${a.name}</div>`).join('');
+        }
+// table 
+        function pips(val, color) {
+            let h = '<div class="score-pip">';
+            for (let i = 1; i <= 5; i++) {
+                const on = (val / 2) >= i;
+                h += `<div class="pip${on ? ' on' : ''}" style="${on ? 'background:' + color : ''}"></div>`;
+            }
+            return h + '</div>';
+        }
+
+        function drawTable() {
+    document.getElementById('cmpTableBody').innerHTML = ALGOS.map(a => `
+    <tr>
+      <td><span style="color:${a.typeColor};font-weight:800">${a.name}</span></td>
+      <td>${pips(a.security, '#00FFD4')}</td>
+      <td>${pips(a.speed, '#39FF6A')}</td>
+      <td>${pips(a.keySize, '#4FC3FF')}</td>
+      <td>${pips(a.usage, '#FFD700')}</td>
+    </tr>`).join('');
+}
+        function switchTab(name) {
+            document.querySelectorAll('.cmp-tab').forEach((t, i) => {
+                t.classList.toggle('active', ['radar', 'table'][i] === name);
+            });
+            document.querySelectorAll('.cmp-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            if (name === 'radar') drawRadar();
+            if (name === 'table') drawTable();
+        }
+
+        let p_val, g_val, a_val, b_val, A_val, B_val;
+        function modExp(base, exp, mod) { let r = 1; base %= mod; while (exp > 0) { if (exp % 2 === 1) r = (r * base) % mod; exp = Math.floor(exp / 2); base = (base * base) % mod; } return r; }
+        function step1() {
+            p_val = +document.getElementById('p').value; g_val = +document.getElementById('g').value;
+            a_val = +document.getElementById('a').value; b_val = +document.getElementById('b').value;
+            if (!p_val || !g_val || !a_val || !b_val) { alert('Enter all values!'); return; }
+            A_val = modExp(g_val, a_val, p_val); B_val = modExp(g_val, b_val, p_val);
+            document.getElementById('A').innerText = A_val;
+            document.getElementById('B').innerText = B_val;
+            document.getElementById('explain').innerText = 'Generated public values A & B';
+        }
+        function step2() {
+            const msg = document.getElementById('msg');
+            msg.style.transition = 'none';
+            msg.style.left = '0%';
+            document.getElementById('explain').innerText = 'User1 sends A → User2';
+
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                msg.style.transition = 'left 1.5s ease-in-out';
+                msg.style.left = 'calc(100% - 40px)'; 
+            }));
+
+            setTimeout(() => {
+                document.getElementById('explain').innerText = 'User2 sends B → User1';
+                msg.style.transition = 'left 1.5s ease-in-out';
+                msg.style.left = '0%';
+            }, 1600);
+            setTimeout(() => {
+                document.getElementById('explain').innerText = 'Keys exchanged successfully ';
+            }, 3200);
+
+        }
+
+        function step3() {
+            const secretA = modExp(B_val, a_val, p_val);
+            document.getElementById('secret').innerText = secretA;
+            localStorage.setItem('dhKey', secretA);
+            document.getElementById('explain').innerText = 'Secret key generated & saved';
+            document.getElementById('secret').style.textShadow = '0 0 15px var(--neon),0 0 30px var(--neon)';
+        }
+        function goToAlgoCeaser() { const s = document.getElementById('secret').innerText; if (s === '?') { alert('Generate key first!'); return; } sessionStorage.setItem('dhKey', s); window.location.href = 'ceaser.html'; }
+        function goToAlgoRail() { const s = document.getElementById('secret').innerText; if (s === '?') { alert('Generate key first!'); return; } sessionStorage.setItem('dhKey', s); window.location.href = 'rail_fence.html'; }
+        function goToAlgoAffine() { const s = document.getElementById('secret').innerText; if (s === '?') { alert('Generate key first!'); return; } sessionStorage.setItem('dhKey', s); window.location.href = 'affine.html'; }
+
+        (function () {
+            const canvas = document.getElementById('dotsCanvas');
+            const ctx = canvas.getContext('2d');
+            const colors = ['rgba(0,255,212,VAL)', 'rgba(180,79,255,VAL)', 'rgba(57,255,106,VAL)', 'rgba(255,79,216,VAL)', 'rgba(79,195,255,VAL)'];
+            let dots = [];
+            function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+            resize(); window.addEventListener('resize', resize);
+            function rand(a, b) { return a + Math.random() * (b - a); }
+            function makeDot() { return { x: Math.random() * canvas.width, y: Math.random() * canvas.height, r: rand(1.5, 4), alpha: rand(.06, .22), alphaDir: Math.random() > .5 ? 1 : -1, alphaSpeed: rand(.002, .006), vx: rand(-.2, .2), vy: rand(-.25, -.05), color: colors[Math.floor(Math.random() * colors.length)] }; }
+            for (let i = 0; i < 45; i++) dots.push(makeDot());
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                dots.forEach(d => {
+                    d.alpha += d.alphaDir * d.alphaSpeed;
+                    if (d.alpha >= .55) { d.alpha = .55; d.alphaDir = -1; } if (d.alpha <= .08) { d.alpha = .08; d.alphaDir = 1; }
+                    d.x += d.vx; d.y += d.vy;
+                    if (d.y + d.r < 0) { d.y = canvas.height + d.r; d.x = Math.random() * canvas.width; }
+                    if (d.x < -d.r) d.x = canvas.width + d.r; if (d.x > canvas.width + d.r) d.x = -d.r;
+                    ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                    ctx.fillStyle = d.color.replace('VAL', d.alpha.toFixed(2)); ctx.fill();
+                    const g = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r * 2.5);
+                    g.addColorStop(0, d.color.replace('VAL', (d.alpha * .2).toFixed(2)));
+                    g.addColorStop(1, d.color.replace('VAL', '0'));
+                    ctx.beginPath(); ctx.arc(d.x, d.y, d.r * 2.5, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        buildPills();
+        drawRadar();
+        drawTable();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

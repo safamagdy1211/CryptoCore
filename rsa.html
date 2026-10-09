@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>RSA Cipher</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap');
+
+        :root {
+            --bg: #00080f;
+            --bg2: #000d18;
+            --panel: #001220;
+            --panel2: #001828;
+            --border: #002a40;
+            --border2: #004060;
+            --accent: #38bdf8;
+            --accent2: #0ea5e9;
+            --accent3: #0369a1;
+            --accent-dim: rgba(56, 189, 248, 0.10);
+            --accent-glow: rgba(56, 189, 248, 0.35);
+            --text: #e0f2fe;
+            --text-dim: #94c8e8;
+            --text-muted: #4a8aaa;
+            --pink: #f472b6;
+            --teal: #34d399;
+            --red: #f87171;
+            --yellow: #fbbf24;
+            --purple: #a78bfa;
+            --purple2: #B44FFF;
+
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 10% 5%, rgba(56, 189, 248, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 70% at 90% 85%, rgba(14, 165, 233, 0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(244, 114, 182, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── GRID OVERLAY — like Vigenère */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(56, 189, 248, .022) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56, 189, 248, .022) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── PARTICLES */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            width: 2px; height: 2px;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(100vh); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-20px) translateX(30px); opacity: 0; }
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 60px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+            background: rgba(0, 8, 15, 0.95);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(24px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 28px;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--purple2), var(--teal), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--accent-glow); }
+            50% { opacity: .5; box-shadow: 0 0 22px var(--accent-glow); }
+        }
+
+        .topbar-center {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            letter-spacing: 5px;
+            color: var(--text-dim);
+        }
+
+        .back-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            background: transparent;
+            border: 1.5px solid rgba(56, 189, 248, .3);
+            border-radius: 20px;
+            padding: 10px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            transition: all .3s;
+        }
+        .back-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 0 24px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            text-align: center;
+            padding: 48px 24px 36px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 7px;
+            color: var(--pink);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        .hero-label::before, .hero-label::after {
+            content: '';
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--pink));
+        }
+        .hero-label::after {
+            background: linear-gradient(90deg, var(--pink), transparent);
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(32px, 5vw, 58px);
+            font-weight: 900;
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 55%, var(--pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .hero-sub {
+            font-size: 17px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+            padding: 0 60px 28px;
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .left-panel .trace-panel {
+            flex: 1;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ── PANEL ── */
+        .panel {
+            background: rgba(0, 18, 32, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--pink));
+            opacity: 0.7;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.08);
+            background: rgba(0, 8, 15, 0.5);
+        }
+
+        .panel-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .panel-title-dot.pink {
+            background: var(--pink);
+            box-shadow: 0 0 8px rgba(244, 114, 182, .5);
+        }
+
+        .char-count {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 18px 22px;
+            resize: none;
+            min-height: 120px;
+        }
+
+        textarea::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+        /* ── BTN ROW ── */
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            padding: 14px 22px;
+            border-top: 1px solid rgba(56, 189, 248, 0.08);
+            background: rgba(0, 8, 15, 0.4);
+            align-items: center;
+        }
+
+        .mode-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border: 1.5px solid rgba(56, 189, 248, 0.22);
+            background: transparent;
+            color: var(--text-dim);
+            transition: all .25s;
+        }
+
+        .mode-btn.active {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: rgba(56, 189, 248, 0.55);
+            color: var(--accent);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.2);
+        }
+
+        .mode-btn:not(.active):hover {
+            color: var(--accent);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, var(--accent3), var(--accent2));
+            border: none;
+            border-radius: 20px;
+            color: var(--bg);
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(56, 189, 248, .3);
+        }
+
+        .action-btn:hover {
+            box-shadow: 0 8px 35px rgba(56, 189, 248, .55);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active { transform: translateY(0); }
+
+        /* ── OUTPUT ── */
+        .output-content {
+            padding: 18px 22px;
+            min-height: 100px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            color: var(--pink);
+            letter-spacing: 1px;
+            line-height: 1.7;
+            word-break: break-all;
+        }
+
+        .output-placeholder { color: var(--text-dim); opacity: 0.5; }
+
+        .copy-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--accent2);
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            border-radius: 10px;
+            padding: 6px 16px;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 22px;
+            border-top: 1px solid rgba(56, 189, 248, 0.08);
+            background: rgba(0, 8, 15, 0.4);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+            animation: pulse 2s infinite;
+        }
+
+        .status-text { color: var(--text-dim); }
+        .status-mode { color: var(--accent); }
+
+        /* ── ERROR ── */
+        .error-banner {
+            display: none;
+            border: 1px solid rgba(248, 113, 113, 0.4);
+            background: rgba(248, 113, 113, 0.08);
+            border-radius: 10px;
+            padding: 12px 22px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--red);
+            letter-spacing: 1px;
+        }
+
+        .error-banner.show { display: block; }
+
+        /* ── KEY PANEL ── */
+        .key-panel {
+            background: rgba(0, 18, 32, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .key-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--pink), var(--accent), var(--teal));
+            opacity: 0.6;
+        }
+
+        .key-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.08);
+            background: rgba(0, 8, 15, 0.5);
+        }
+
+        .key-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+        }
+
+        .shift-control {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .key-block {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .key-block-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+        }
+
+        .badge.pink {
+            border-color: rgba(244, 114, 182, 0.3);
+            background: rgba(244, 114, 182, 0.1);
+            color: var(--pink);
+        }
+
+        .prime-select {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .prime-chip {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border2);
+            background: var(--bg2);
+            color: var(--text-dim);
+            transition: all .15s;
+        }
+
+        .prime-chip:hover {
+            background: var(--accent-dim);
+            color: var(--accent);
+            border-color: var(--accent2);
+        }
+
+        .prime-chip.on-p {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent);
+            border-color: var(--accent2);
+        }
+
+        .prime-chip.on-q {
+            background: rgba(244, 114, 182, 0.15);
+            color: var(--pink);
+            border-color: rgba(244, 114, 182, 0.5);
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(56, 189, 248, 0.1);
+            margin: 2px 0;
+        }
+
+        .key-vals {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .kv-box {
+            background: rgba(0, 8, 15, 0.7);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .kv-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+        }
+
+        .kv-val {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .kv-val.pink  { color: var(--pink); }
+        .kv-val.teal  { color: var(--teal); }
+        .kv-val.yellow{ color: var(--yellow); }
+        .kv-val.purple{ color: var(--purple); }
+
+        .rnd-btn {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            background: rgba(244, 114, 182, 0.07);
+            border: 1px solid rgba(244, 114, 182, 0.25);
+            border-radius: 10px;
+            color: var(--pink);
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .rnd-btn:hover {
+            color: #fff;
+            border-color: var(--pink);
+            background: rgba(244, 114, 182, 0.14);
+        }
+
+        /* ── MATH TRACE ── */
+        .trace-panel {
+            background: rgba(0, 18, 32, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-radius: 16px;
+            padding: 18px 22px;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .trace-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--teal), var(--accent));
+            opacity: 0.5;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .trace-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .trace-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .trace-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: rgba(0, 8, 15, 0.6);
+            border: 1px solid var(--border);
+        }
+
+        .trace-label {
+            color: var(--text-muted);
+            font-size: 10px;
+            letter-spacing: 1px;
+            width: 28px;
+            flex-shrink: 0;
+        }
+
+        .trace-expr { color: var(--text); flex: 1; }
+
+        .trace-val {
+            color: var(--accent);
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .trace-row.hi-blue   { border-color: rgba(56, 189, 248, 0.3);  background: rgba(56, 189, 248, 0.06); }
+        .trace-row.hi-pink   { border-color: rgba(244, 114, 182, 0.3); background: rgba(244, 114, 182, 0.06); }
+        .trace-row.hi-teal   { border-color: rgba(52, 211, 153, 0.3);  background: rgba(52, 211, 153, 0.06); }
+        .trace-row.hi-yellow { border-color: rgba(251, 191, 36, 0.3);  background: rgba(251, 191, 36, 0.06); }
+        .trace-row.hi-purple { border-color: rgba(167, 139, 250, 0.3); background: rgba(167, 139, 250, 0.06); }
+
+        .trace-val.pink  { color: var(--pink); }
+        .trace-val.teal  { color: var(--teal); }
+        .trace-val.yellow{ color: var(--yellow); }
+        .trace-val.purple{ color: var(--purple); }
+
+        /* ── STEPS SECTION ── */
+        .steps-section {
+            position: relative;
+            z-index: 1;
+            padding: 0 60px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tabs-panel {
+            background: rgba(0, 18, 32, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            position: relative;
+        }
+
+        .tabs-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--pink));
+            opacity: 0.6;
+        }
+
+        .steps-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+            padding: 0 16px;
+            background: rgba(0, 8, 15, 0.5);
+        }
+
+        .steps-tab {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            padding: 16px 24px;
+            color: var(--text-dim);
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all .2s;
+            margin-bottom: -1px;
+        }
+
+        .steps-tab .tab-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .steps-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .steps-tab.active .tab-dot {
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        .steps-tab:hover:not(.active) { color: var(--text-dim); }
+
+        .steps-content { padding: 28px; }
+
+        /* Steps track */
+        .steps-row {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .step-num {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px solid rgba(56, 189, 248, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(0, 8, 15, 0.7);
+            transition: all .3s;
+        }
+
+        .step-item.active .step-num {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            box-shadow: 0 0 18px var(--accent-glow);
+        }
+
+        .step-item.done .step-num {
+            border-color: var(--pink);
+            color: var(--pink);
+            background: rgba(244, 114, 182, .10);
+        }
+
+        .step-lbl {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-top: 6px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .step-item.active .step-lbl { color: var(--accent); }
+        .step-item.done .step-lbl   { color: var(--pink); }
+
+        .step-connector {
+            width: 28px;
+            height: 2px;
+            background: rgba(56, 189, 248, 0.2);
+            margin-bottom: 22px;
+            flex-shrink: 0;
+        }
+
+        .step-connector.done { background: var(--pink); }
+
+        .step-detail {
+            background: rgba(0, 8, 15, 0.6);
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-left: 3px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.8;
+            min-height: 80px;
+        }
+
+        .step-detail span {
+            color: var(--accent);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .formula-box {
+            margin-top: 12px;
+            padding: 12px 18px;
+            background: rgba(0, 8, 15, 0.7);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--accent);
+            letter-spacing: 1px;
+            line-height: 2.2;
+        }
+
+        /* ── LEARN ── */
+        .learn-content {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .learn-content.active { display: grid; }
+
+        .learn-block {
+            background: rgba(0, 8, 15, 0.6);
+            border: 1px solid rgba(56, 189, 248, 0.12);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .learn-block h4 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        
+        .learn-block p {
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        .mono {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--accent);
+        }
+
+        /* ── NOTIF ── */
+        .notif {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--panel);
+            border: 1px solid var(--accent2);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--accent);
+            letter-spacing: 1px;
+            z-index: 999;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all .3s;
+            pointer-events: none;
+        }
+
+        .notif.show { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 900px) {
+            .main { grid-template-columns: 1fr; padding: 0 24px 24px; }
+            .right-panel { order: -1; }
+            .steps-section { padding: 0 24px 30px; }
+            .topbar { padding: 16px 24px; }
+        }
+
+        .prime-select {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 5px !important;
+            min-height: 28px !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="particles" id="particles"></div>
+
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-dot"></div>CRYPTOCORE
+        </div>
+        <button class="back-btn" onclick="history.back()">← BACK</button>
+    </div>
+
+    <div class="hero">
+        <div class="hero-title">RSA</div>
+        <div class="hero-sub">Public key encryption using prime factorization , encrypt with (e, n), decrypt with (d, n)</div>
+    </div>
+
+    <div class="main">
+
+        <!-- LEFT -->
+        <div class="left-panel">
+
+            <!-- INPUT -->
+            <div class="panel" style="display:flex;flex-direction:column;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot"></div> INPUT MESSAGE
+                    </div>
+                    <div class="char-count" id="inCount">0 chars</div>
+                </div>
+                <textarea id="inputText" placeholder="Type a short message or number to encrypt…" oninput="updateCount()" style="flex:1;"></textarea>
+                <div class="btn-row">
+                    <div class="mode-btns">
+                        <button class="mode-btn active" id="btnEncrypt" onclick="setMode('encrypt')">Encrypt</button>
+                        <button class="mode-btn" id="btnDecrypt" onclick="setMode('decrypt')">Decrypt</button>
+                    </div>
+                    <button class="action-btn" onclick="processText()">
+                        <span id="actionLabel">ENCRYPT</span>
+                        <span>→</span>
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- OUTPUT -->
+            <div class="panel" style="display:flex;flex-direction:column;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot pink"></div> OUTPUT
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div class="char-count" id="outCount">0 nums</div>
+                        <button class="copy-btn" onclick="copyOutput()">COPY</button>
+                    </div>
+                </div>
+                <div class="output-content" id="outputText" style="flex:1;">
+                    <span class="output-placeholder">Encrypted output appears here…</span>
+                </div>
+                
+            </div>
+
+            <!-- MATH TRACE -->
+            <div class="trace-panel">
+                <div class="trace-title">STEP-BY-STEP MATH TRACE</div>
+                <div class="trace-rows" id="mathTrace">
+                    <div class="trace-row" style="color:var(--text-dim);font-size:12px;">
+                        Set your primes and run encrypt/decrypt to see the full calculation here.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="right-panel">
+
+            <div class="key-panel">
+                <div class="key-header">
+                    <div class="key-title">KEY GENERATION</div>
+                    <button class="rnd-btn" style="width:auto;padding:5px 14px;" onclick="randomPrimes()">RANDOM</button>
+                </div>
+
+                <div class="shift-control">
+
+                    <div class="key-block">
+                        <div class="key-block-label">PRIME p <span class="badge">PRIME</span></div>
+                        <div class="prime-select" id="chipsP"></div>
+                    </div>
+
+                    <div class="key-block">
+                        <div class="key-block-label">PRIME q <span class="badge pink">PRIME</span></div>
+                        <div class="prime-select" id="chipsQ"></div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="key-vals">
+                        <div class="kv-box">
+                            <div class="kv-label">n = p x q</div>
+                            <div class="kv-val" id="kv-n">—</div>
+                        </div>
+                        <div class="kv-box">
+                            <div class="kv-label">φ(n) = (p-1)(q-1)</div>
+                            <div class="kv-val purple" id="kv-phi">—</div>
+                        </div>
+                        <div class="kv-box">
+                            <div class="kv-label">e (public exp)</div>
+                            <div class="kv-val teal" id="kv-e">—</div>
+                        </div>
+                        <div class="kv-box">
+                            <div class="kv-label">d (private exp)</div>
+                            <div class="kv-val yellow" id="kv-d">—</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div class="kv-box">
+                            <div class="kv-label">PUBLIC KEY ( e , n )</div>
+                            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--teal);margin-top:3px;" id="kv-pub">—</div>
+                        </div>
+                        <div class="kv-box">
+                            <div class="kv-label">PRIVATE KEY ( d , n )</div>
+                            <div style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--yellow);margin-top:3px;" id="kv-priv">—</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BOTTOM TABS -->
+    <div class="steps-section">
+        <div class="tabs-panel">
+            <div class="steps-tabs">
+                <button class="steps-tab active" id="tab-steps" onclick="switchTab('steps')">
+                    <div class="tab-dot"></div> STEPS
+                </button>
+                <button class="steps-tab" id="tab-learn" onclick="switchTab('learn')">
+                    <div class="tab-dot"></div> LEARN
+                </button>
+            </div>
+
+            <div class="steps-content">
+
+                <!-- STEPS pane -->
+                <div id="pane-steps">
+                    <div class="steps-row">
+                        <div class="step-item active" id="s1" onclick="setStep(1)">
+                            <div class="step-num">1</div>
+                            <div class="step-lbl">Pick Primes</div>
+                        </div>
+                        <div class="step-connector" id="con1"></div>
+                        <div class="step-item" id="s2" onclick="setStep(2)">
+                            <div class="step-num">2</div>
+                            <div class="step-lbl">Compute n</div>
+                        </div>
+                        <div class="step-connector" id="con2"></div>
+                        <div class="step-item" id="s3" onclick="setStep(3)">
+                            <div class="step-num">3</div>
+                            <div class="step-lbl">Totient φ</div>
+                        </div>
+                        <div class="step-connector" id="con3"></div>
+                        <div class="step-item" id="s4" onclick="setStep(4)">
+                            <div class="step-num">4</div>
+                            <div class="step-lbl">Choose e</div>
+                        </div>
+                        <div class="step-connector" id="con4"></div>
+                        <div class="step-item" id="s5" onclick="setStep(5)">
+                            <div class="step-num">5</div>
+                            <div class="step-lbl">Find d</div>
+                        </div>
+                        <div class="step-connector" id="con5"></div>
+                        <div class="step-item" id="s6" onclick="setStep(6)">
+                            <div class="step-num">6</div>
+                            <div class="step-lbl">Encrypt</div>
+                        </div>
+                        <div class="step-connector" id="con6"></div>
+                        <div class="step-item" id="s7" onclick="setStep(7)">
+                            <div class="step-num">7</div>
+                            <div class="step-lbl">Decrypt</div>
+                        </div>
+                    </div>
+                    <div class="step-detail" id="stepDetail"></div>
+                </div>
+
+                <!-- LEARN pane -->
+                <div id="pane-learn" style="display:none;">
+                    <div class="learn-content active">
+                        <div class="learn-block">
+                            <h4>WHAT IS RSA?</h4>
+                            <p>RSA (Rivest-Shamir-Adleman, 1977) is the world's most widely used public key cryptosystem. It uses a key pair a <strong class="mono">public key</strong> anyone can use to encrypt, and a <strong class="mono">private key</strong> only the owner uses to decrypt. Security rests on the hardness of factoring large numbers.</p>
+                        </div>
+                        <div class="learn-block">
+                            <h4>KEY GENERATION</h4>
+                            <p>Choose two distinct primes <strong class="mono">p</strong> and <strong class="mono">q</strong>. Compute <strong class="mono">n = p·q</strong> (the modulus) and Euler's totient <strong class="mono">φ(n) = (p-1)(q-1)</strong>. Pick public exponent <strong class="mono">e</strong> with <strong class="mono">gcd(e, φ) = 1</strong>. Compute private exponent <strong class="mono">d</strong> as the modular inverse of e mod φ.</p>
+                        </div>
+                        <div class="learn-block">
+                            <h4>ENCRYPTION &amp; DECRYPTION</h4>
+                            <p>Each character is treated as its ASCII code <strong class="mono">m</strong>. It must satisfy <strong class="mono">m &lt; n</strong>.</p>
+                            <div class="formula-box">
+                                Encrypt: C = mᵉ mod n<br>
+                                Decrypt: m = Cᵈ mod n<br>
+                                ─────────────────────────<br>
+                                Public key: ( e , n )<br>
+                                Private key: ( d , n )
+                            </div>
+                        </div>
+                        
+                        <div class="learn-block">
+                            <h4>WHY ASYMMETRIC?</h4>
+                            <p>Unlike Caesar or Rail Fence, RSA uses <em>two different keys</em>. Encrypting with the public key produces ciphertext that only the private key can decode. This enables secure communication without ever sharing a secret key, making RSA fundamental to HTTPS, SSH, and digital signatures.</p>
+                        </div>
+                        <div class="learn-block">
+                            <h4>MODULAR EXPONENTIATION</h4>
+                            <p>Computing <strong class="mono">mᵉ mod n</strong> for large numbers uses the fast <em>square and multiply</em> (binary exponentiation) algorithm, making it efficient even for huge exponents , while the inverse operation (discrete log / factoring) remains hard.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        let mode = 'encrypt';
+        let selP = 61, selQ = 53;
+
+        function gcd(a, b) { return b === 0n ? a : gcd(b, a % b); }
+
+        function modInverse(a, m) {
+            let [old_r, r] = [a, m];
+            let [old_s, s] = [1n, 0n];
+            while (r !== 0n) {
+                const q = old_r / r;
+                [old_r, r] = [r, old_r - q * r];
+                [old_s, s] = [s, old_s - q * s];
+            }
+            return ((old_s % m) + m) % m;
+        }
+
+        function modPow(base, exp, mod) {
+            let result = 1n;
+            base = base % mod;
+            while (exp > 0n) {
+                if (exp % 2n === 1n) result = result * base % mod;
+                exp = exp / 2n;
+                base = base * base % mod;
+            }
+            return result;
+        }
+
+        function isPrime(n) {
+            if (n < 2) return false;
+            for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+            return true;
+        }
+
+        function deriveKeys(p, q) {
+            const P = BigInt(p), Q = BigInt(q);
+            const n = P * Q;
+            const phi = (P - 1n) * (Q - 1n);
+            let e = 3n;
+            while (e < phi && gcd(e, phi) !== 1n) e += 2n;
+            const d = modInverse(e, phi);
+            return { n, phi, e, d };
+        }
+
+        function updateKeyDisplay() {
+            if (!isPrime(selP) || !isPrime(selQ) || selP === selQ) {
+                ['kv-n','kv-phi','kv-e','kv-d','kv-pub','kv-priv'].forEach(id => {
+                    document.getElementById(id).textContent = '—';
+                });
+                return;
+            }
+            const { n, phi, e, d } = deriveKeys(selP, selQ);
+            document.getElementById('kv-n').textContent    = n.toString();
+            document.getElementById('kv-phi').textContent  = phi.toString();
+            document.getElementById('kv-e').textContent    = e.toString();
+            document.getElementById('kv-d').textContent    = d.toString();
+            document.getElementById('kv-pub').textContent  = `( ${e} ,  ${n} )`;
+            document.getElementById('kv-priv').textContent = `( ${d} ,  ${n} )`;
+        }
+
+        function renderTrace(lines) {
+            const container = document.getElementById('mathTrace');
+            container.innerHTML = lines.map(l => `
+            <div class="trace-row ${l.hi || ''}">
+                <div class="trace-label">${l.label || ''}</div>
+                <div class="trace-expr">${l.expr || ''}</div>
+                <div class="trace-val ${l.vc || ''}">${l.val || ''}</div>
+            </div>`).join('');
+        }
+
+        function rsaEncrypt(text, e, n) {
+            const nums = [];
+            for (const ch of text) {
+                const m = BigInt(ch.charCodeAt(0));
+                if (m >= n) return null;
+                nums.push(modPow(m, e, n));
+            }
+            return nums;
+        }
+
+        function rsaDecrypt(text, d, n) {
+            const parts = text.trim().split(/\s+/);
+            const chars = [];
+            for (const part of parts) {
+                if (!part) continue;
+                try {
+                    const c = BigInt(part);
+                    const m = modPow(c, d, n);
+                    chars.push(String.fromCharCode(Number(m)));
+                } catch { return null; }
+            }
+            return chars.join('');
+        }
+
+        function processText() {
+            document.getElementById('errBanner').classList.remove('show');
+            if (!isPrime(selP) || !isPrime(selQ) || selP === selQ) {
+                document.getElementById('errBanner').textContent = 'Please select two different primes p and q.';
+                document.getElementById('errBanner').classList.add('show');
+                return;
+            }
+
+            const { n, phi, e, d } = deriveKeys(selP, selQ);
+            const text = document.getElementById('inputText').value;
+            const outEl = document.getElementById('outputText');
+
+            if (mode === 'encrypt') {
+                const enc = rsaEncrypt(text, e, n);
+                // if (enc === null) {
+                //     // document.getElementById('errBanner').textContent = 'MESSAGE TOO LARGE — each character code must be < n (' + n + '). Use larger primes or shorter/simpler text.';
+                //     document.getElementById('errBanner').classList.add('show');
+                //     return;
+                // }
+                const result = enc.join(' ');
+                outEl.textContent = result || '';
+                if (!result) outEl.innerHTML = '<span class="output-placeholder">Encrypted output appears here…</span>';
+                document.getElementById('outCount').textContent = enc.length + ' nums';
+                document.getElementById('statusMode').textContent = 'ENCRYPTED — KEY: (' + e + ', ' + n + ')';
+
+                if (text.length > 0) {
+                    const ch = text[0];
+                    const m = BigInt(ch.charCodeAt(0));
+                    const C = modPow(m, e, n);
+                    renderTrace([
+                        { label: 'p',   expr: 'prime p',                                    val: selP,          hi: 'hi-blue' },
+                        { label: 'q',   expr: 'prime q',                                    val: selQ,          hi: 'hi-pink',   vc: 'pink' },
+                        { label: 'n',   expr: 'p x q',                                      val: n.toString(),  hi: 'hi-blue' },
+                        { label: 'φ',   expr: '(p-1)(q-1)',                                 val: phi.toString(),hi: 'hi-purple', vc: 'purple' },
+                        { label: 'e',   expr: 'public exponent',                            val: e.toString(),  hi: 'hi-teal',   vc: 'teal' },
+                        { label: 'd',   expr: 'e⁻¹ mod φ(n)',                               val: d.toString(),  hi: 'hi-yellow', vc: 'yellow' },
+                        { label: 'm',   expr: `ASCII("${ch}")`,                             val: m.toString() },
+                        { label: 'C',   expr: `m^e mod n = ${m}^${e} mod ${n}`,             val: C.toString(),  hi: 'hi-blue' },
+                        { label: '···', expr: text.length > 1 ? `… and ${text.length - 1} more character(s)` : 'single character', val: '' },
+                    ]);
+                }
+
+                for (let i = 1; i <= 6; i++) setStepState(i, i < 6 ? 'done' : 'active');
+                setStep(6);
+
+            } else {
+                const dec = rsaDecrypt(text, d, n);
+                if (dec === null) {
+                    document.getElementById('errBanner').textContent = '⚠ INVALID INPUT — paste space-separated cipher numbers produced by this tool.';
+                    document.getElementById('errBanner').classList.add('show');
+                    return;
+                }
+                outEl.textContent = dec || '';
+                if (!dec) outEl.innerHTML = '<span class="output-placeholder">Decrypted output appears here…</span>';
+                document.getElementById('outCount').textContent = dec.length + ' chars';
+                document.getElementById('statusMode').textContent = 'DECRYPTED — KEY: (' + d + ', ' + n + ')';
+
+                const parts = text.trim().split(/\s+/);
+                if (parts.length > 0 && parts[0]) {
+                    try {
+                        const C = BigInt(parts[0]);
+                        const m = modPow(C, d, n);
+                        renderTrace([
+                            { label: 'p',   expr: 'prime p',                              val: selP,          hi: 'hi-blue' },
+                            { label: 'q',   expr: 'prime q',                              val: selQ,          hi: 'hi-pink',   vc: 'pink' },
+                            { label: 'n',   expr: 'p × q',                                val: n.toString(),  hi: 'hi-blue' },
+                            { label: 'd',   expr: 'private exponent',                     val: d.toString(),  hi: 'hi-yellow', vc: 'yellow' },
+                            { label: 'C',   expr: 'ciphertext value',                     val: C.toString() },
+                            { label: 'm',   expr: `C^d mod n = ${C}^${d} mod ${n}`,       val: m.toString(),  hi: 'hi-teal',   vc: 'teal' },
+                            { label: 'ch',  expr: `char(${m})`,                           val: `"${String.fromCharCode(Number(m))}"`, hi: 'hi-blue' },
+                            { label: '···', expr: parts.length > 1 ? `… and ${parts.length - 1} more value(s)` : 'single value', val: '' },
+                        ]);
+                    } catch {/* */}
+                }
+
+                for (let i = 1; i <= 7; i++) setStepState(i, i < 7 ? 'done' : 'active');
+                setStep(7);
+            }
+        }
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btnEncrypt').className = 'mode-btn' + (m === 'encrypt' ? ' active' : '');
+            document.getElementById('btnDecrypt').className = 'mode-btn' + (m === 'decrypt' ? ' active' : '');
+            document.getElementById('actionLabel').textContent = m === 'encrypt' ? 'ENCRYPT' : 'DECRYPT';
+            // document.getElementById('statusMode').textContent  = m === 'encrypt' ? 'RSA ACTIVE' : 'DECRYPT MODE';
+        }
+
+        function buildChips() {
+            const smallPrimes = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73];
+            ['chipsP','chipsQ'].forEach((id, qi) => {
+                const el = document.getElementById(id);
+                el.innerHTML = '';
+                smallPrimes.forEach(p => {
+                    const c = document.createElement('div');
+                    const isActive = qi === 0 ? p === selP : p === selQ;
+                    c.className = 'prime-chip' + (isActive ? (qi === 0 ? ' on-p' : ' on-q') : '');
+                    c.textContent = p;
+                    c.dataset.v = p;
+                    c.onclick = () => {
+                        if (qi === 0) selP = p; else selQ = p;
+                        refreshChips(); updateKeyDisplay();
+                    };
+                    el.appendChild(c);
+                });
+            });
+        }
+
+        function refreshChips() {
+            document.querySelectorAll('#chipsP .prime-chip').forEach(c => {
+                c.className = 'prime-chip' + (parseInt(c.dataset.v) === selP ? ' on-p' : '');
+            });
+            document.querySelectorAll('#chipsQ .prime-chip').forEach(c => {
+                c.className = 'prime-chip' + (parseInt(c.dataset.v) === selQ ? ' on-q' : '');
+            });
+        }
+
+        function randomPrimes() {
+            const pool = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73];
+            let i = Math.floor(Math.random() * pool.length);
+            let j = Math.floor(Math.random() * pool.length);
+            while (j === i) j = Math.floor(Math.random() * pool.length);
+            selP = pool[i]; selQ = pool[j];
+            refreshChips(); updateKeyDisplay();
+        }
+
+        function updateCount() {
+            document.getElementById('inCount').textContent = document.getElementById('inputText').value.length + ' chars';
+        }
+
+        function copyOutput() {
+            const text = document.getElementById('outputText').textContent;
+            if (!text || text.includes('appears here')) return;
+            navigator.clipboard.writeText(text).then(() => {
+                const n = document.getElementById('notif');
+                n.classList.add('show');
+                setTimeout(() => n.classList.remove('show'), 2000);
+            });
+        }
+
+        const stepTexts = ['',
+            '<span>STEP 1 — PICK PRIMES:</span> Choose two distinct prime numbers p and q from the chip selectors on the right. Larger primes give a bigger modulus n, allowing more characters to be encrypted. Real RSA uses primes with 1024-4096 bits.',
+            '<span>STEP 2 — COMPUTE n:</span> Multiply the two primes to get the modulus n = p x q. This number is part of both the public and private keys. Its size defines the keyspace , factoring n back into p and q is computationally hard for large values.<div class="formula-box">n = p x q</div>',
+            '<span>STEP 3 — EULER\'S TOTIENT φ(n):</span> Compute φ(n) = (p-1)(q-1). This counts how many integers from 1 to n-1 are coprime with n. φ(n) stays secret ,it is the foundation for computing both e and d.<div class="formula-box">φ(n) = (p - 1) x (q - 1)</div>',
+            '<span>STEP 4 — CHOOSE e:</span> Pick the public exponent e such that 1 &lt; e &lt; φ(n) and gcd(e, φ(n)) = 1. A common real world choice is 65537. Together with n this forms the <span>public key (e, n)</span> that anyone may use to encrypt.',
+            '<span>STEP 5 — FIND d:</span> Compute the private exponent d as the modular inverse of e modulo φ(n): d·e ≡ 1 (mod φ(n)). This uses the Extended Euclidean Algorithm. Together with n this forms the <span>private key (d, n)</span> kept secret.<div class="formula-box">d = e⁻¹ mod φ(n)</div>',
+            '<span>STEP 6 — ENCRYPT:</span> For each character, convert to its ASCII code m (requires m &lt; n). Apply:<div class="formula-box">C = mᵉ mod n</div>Each character produces one ciphertext number. The output is a space separated list of integers. Anyone knowing (e, n) can encrypt only the holder of d can decrypt.',
+            '<span>STEP 7 — DECRYPT:</span> For each ciphertext number C, apply the private key:<div class="formula-box">m = Cᵈ mod n</div>Convert m back to its character via char(m). The correctness follows from Euler\'s theorem: (mᵉ)ᵈ ≡ m (mod n) when gcd(m, n) = 1.'
+        ];
+
+        function setStepState(i, state) {
+            const el = document.getElementById('s' + i);
+            if (!el) return;
+            el.className = 'step-item ' + state;
+            if (i < 7) {
+                const c = document.getElementById('con' + i);
+                if (c) c.className = 'step-connector' + (state === 'done' ? ' done' : '');
+            }
+        }
+
+        function setStep(n) {
+            for (let i = 1; i <= 7; i++) {
+                if (i < n) setStepState(i, 'done');
+                else if (i === n) setStepState(i, 'active');
+                else setStepState(i, '');
+            }
+            document.getElementById('stepDetail').innerHTML = stepTexts[n];
+        }
+
+        function switchTab(tab) {
+            ['steps', 'learn'].forEach(t => {
+                document.getElementById('tab-' + t).className = 'steps-tab' + (t === tab ? ' active' : '');
+                document.getElementById('pane-' + t).style.display = t === tab ? 'block' : 'none';
+            });
+        }
+
+        // ── PARTICLES
+        const pContainer = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDuration = (8 + Math.random() * 12) + 's';
+            p.style.animationDelay = (Math.random() * 15) + 's';
+            p.style.background = ['#38bdf8','#a78bfa','#f472b6','#34d399'][Math.floor(Math.random() * 4)];
+            pContainer.appendChild(p);
+        }
+
+        buildChips(); updateKeyDisplay(); setStep(1);
+    </script>
+</body>
+
+</html>

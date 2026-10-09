@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Monoalphabatic Cipher</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap');
+
+    :root {
+      --bg: #050A14;
+      --bg2: #0A1628;
+      --panel: #0d1f35;
+      --panel2: #0A1628;
+      --border: #0e2d3a;
+      --border2: #1a4a5e;
+      --accent: #00FFD4;
+      --accent2: #00BFA5;
+      --accent3: #00897B;
+      --accent-dim: rgba(0, 255, 212, 0.08);
+      --accent-glow: rgba(0, 255, 212, 0.35);
+      --text: #C8D8F0;
+      --text-dim: #7ab8c8;
+      --text-muted: #3a7a8c;
+      --pink: #B44FFF;
+      --teal: #4FC3FF;
+      --red: #39FF6A;
+      --yellow: #FFD166;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 255, 212, .06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 60% at 85% 80%, rgba(180, 79, 255, .09) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── PARTICLES ── */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      animation: float linear infinite;
+      opacity: 0;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(-20px) translateX(30px);
+        opacity: 0;
+      }
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 60px;
+      /* height: 52px; */
+      border-bottom: 1px solid var(--border);
+      background: rgba(5, 10, 20, 0.97);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(24px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, var(--pink), var(--accent), var(--teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-transform: uppercase;
+    }
+
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        box-shadow: 0 0 8px var(--accent-glow);
+      }
+
+      50% {
+        opacity: .5;
+        box-shadow: 0 0 22px var(--accent-glow);
+      }
+    }
+
+    .topbar-center {
+      font-family: 'Orbitron', monospace;
+      font-size: 12px;
+      letter-spacing: 4px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar-center span {
+      color: var(--pink);
+      font-size: 11px;
+    }
+
+    .back-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      background: transparent;
+      border: 1.5px solid rgba(0, 255, 212, .3);
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      transition: all .3s;
+      text-decoration: none;
+    }
+
+    .back-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+      box-shadow: 0 0 24px rgba(0, 255, 212, .45);
+      transform: translateY(-2px);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 32px 20px 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 5px;
+      color: var(--pink);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .hero-label::before,
+    .hero-label::after {
+      content: '';
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--pink));
+    }
+
+    .hero-label::after {
+      background: linear-gradient(90deg, var(--pink), transparent);
+    }
+
+    .hero-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(28px, 5vw, 56px);
+      font-weight: 900;
+      letter-spacing: 6px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--teal) 50%, var(--pink) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 20px;
+      padding: 0 60px 6px;
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      align-items: stretch;
+    }
+
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .left-panel #outputPanel {
+      flex: 1;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .right-panel .key-panel {
+      flex: 1;
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: rgba(10, 22, 40, 0.85);
+      border: 1px solid rgba(0, 255, 212, .12);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(16px);
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--pink), var(--teal));
+      opacity: .7;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 22px;
+      border-bottom: 1px solid rgba(0, 255, 212, .08);
+      background: rgba(5, 10, 20, 0.5);
+    }
+
+    .panel-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    .panel-title-dot.pink {
+      background: var(--pink);
+      box-shadow: 0 0 6px var(--pink);
+    }
+
+    .char-count {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 230px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 15px;
+      line-height: 1.7;
+      padding: 18px 22px;
+      resize: none;
+      flex: 1;
+    }
+
+    textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    textarea.output-ta {
+      color: var(--pink);
+    }
+
+    /* ── BTN ROW ── */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      padding: 14px 22px;
+      border-top: 1px solid rgba(0, 255, 212, .08);
+      background: rgba(5, 10, 20, 0.4);
+      align-items: center;
+    }
+
+    .mode-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mode-btn {
+      padding: 10px 26px;
+      border-radius: 20px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border: 1.5px solid rgba(0, 255, 212, .22);
+      background: transparent;
+      color: rgba(200, 216, 240, .5);
+      transition: all .25s;
+    }
+
+    .mode-btn.active {
+      background: rgba(0, 255, 212, .12);
+      border-color: rgba(0, 255, 212, .55);
+      color: var(--accent);
+      box-shadow: 0 0 18px rgba(0, 255, 212, .2);
+    }
+
+    .mode-btn:not(.active):hover {
+      color: var(--accent);
+      border-color: rgba(0, 255, 212, .4);
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 12px 28px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border: none;
+      border-radius: 20px;
+      color: var(--bg);
+      font-family: 'Orbitron', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: all .3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 255, 212, .3);
+    }
+
+    .action-btn:hover {
+      box-shadow: 0 8px 35px rgba(0, 255, 212, .55);
+      transform: translateY(-2px);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    /* ── OUTPUT ── */
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 22px;
+      border-bottom: 1px solid rgba(0, 255, 212, .08);
+      background: rgba(5, 10, 20, 0.5);
+    }
+
+    .copy-btn {
+      background: rgba(10, 22, 40, .7);
+      border: 1px solid rgba(0, 255, 212, .22);
+      border-radius: 8px;
+      padding: 4px 10px;
+      color: var(--text-dim);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all .25s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .copy-btn:hover {
+      border-color: rgba(0, 255, 212, .5);
+      color: var(--accent);
+    }
+
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    .status-text {
+      color: var(--text-dim);
+    }
+
+    .status-mode {
+      color: var(--accent);
+    }
+
+    /* ── KEY PANEL ── */
+    .key-panel {
+      background: rgba(10, 22, 40, 0.85);
+      border: 1px solid rgba(0, 255, 212, .12);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(16px);
+    }
+
+    .key-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--pink), var(--teal));
+      opacity: .7;
+    }
+
+    .key-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 22px;
+      border-bottom: 1px solid rgba(0, 255, 212, .08);
+      background: rgba(5, 10, 20, 0.5);
+    }
+
+    .key-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: var(--accent);
+    }
+
+    .shift-control {
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .key-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .key-block-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Key display — animated letters */
+    .key-display-wrap {
+      background: rgba(5, 10, 20, 0.6);
+      border: 1px solid rgba(0, 255, 212, .15);
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 2px;
+      word-break: break-all;
+      line-height: 1.8;
+      text-shadow: 0 0 14px rgba(0, 255, 212, .4);
+    }
+
+    .key-letter {
+      display: inline-block;
+      animation: keyFloat var(--dur, 3s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+      transition: color .2s;
+    }
+
+    .key-letter:hover {
+      color: var(--teal);
+      text-shadow: 0 0 18px rgba(79, 195, 255, .6);
+    }
+
+    @keyframes keyFloat {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-4px);
+      }
+    }
+
+    .key-hint {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* Key input */
+    .key-input-field {
+      width: 100%;
+      padding: 7px 12px;
+      border-radius: 10px;
+      background: rgba(0, 255, 212, .03);
+      border: 1px solid rgba(0, 255, 212, .2);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      outline: none;
+      transition: .3s;
+    }
+
+    .key-input-field::placeholder {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .key-input-field:focus {
+      border-color: rgba(0, 255, 212, .55);
+      box-shadow: 0 0 18px rgba(0, 255, 212, .14);
+    }
+
+    /* Random btn */
+    .rnd-btn {
+      width: 100%;
+      padding: 7px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      background: rgba(0, 255, 212, .07);
+      border: 1px solid rgba(0, 255, 212, .25);
+      border-radius: 10px;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .rnd-btn:hover {
+      color: #fff;
+      border-color: var(--accent);
+      background: rgba(0, 255, 212, .15);
+      box-shadow: 0 0 18px rgba(0, 255, 212, .2);
+    }
+
+    /* Copy key btn */
+    .copy-key-btn {
+      width: 100%;
+      padding: 7px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      background: rgba(79, 195, 255, .06);
+      border: 1px solid rgba(79, 195, 255, .22);
+      border-radius: 10px;
+      color: var(--teal);
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .copy-key-btn:hover {
+      color: #fff;
+      border-color: var(--teal);
+      background: rgba(79, 195, 255, .15);
+    }
+
+    /* ── MAPPING TABLE ── */
+    .mapping-section {
+      padding: 0 18px 18px;
+      border-top: 1px solid rgba(0, 255, 212, .08);
+      padding-top: 14px;
+    }
+
+    .mapping-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mapping-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(0, 255, 212, .08);
+    }
+
+    .mapping-grid {
+      display: grid;
+      grid-template-columns: repeat(13, 1fr);
+      gap: 3px;
+    }
+
+    .map-item {
+      background: rgba(5, 10, 20, 0.7);
+      border: 1px solid rgba(0, 255, 212, .1);
+      border-radius: 6px;
+      padding: 4px 2px;
+      text-align: center;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      transition: all .2s;
+      cursor: default;
+    }
+
+    .map-item:hover {
+      background: rgba(0, 255, 212, .08);
+      border-color: rgba(0, 255, 212, .3);
+      transform: scale(1.06);
+      box-shadow: 0 0 12px rgba(0, 255, 212, .15);
+    }
+
+    .map-from {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .map-arrow {
+      color: var(--text-muted);
+      font-size: 7px;
+      display: block;
+      margin: 1px 0;
+    }
+
+    .map-to {
+      color: var(--pink);
+      font-size: 11px;
+      font-weight: 700;
+      text-shadow: 0 0 8px rgba(180, 79, 255, .4);
+    }
+
+    /* ── STEPS SECTION ── */
+    .steps-section {
+      position: relative;
+      z-index: 1;
+      padding: 0 60px 30px;
+      max-width: 1400px;
+      margin: 24px auto 0;
+      width: 100%;
+    }
+
+    .tabs-panel {
+      background: rgba(10, 22, 40, 0.85);
+      border: 1px solid rgba(0, 255, 212, .12);
+      border-radius: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      position: relative;
+    }
+
+    .tabs-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--pink), var(--teal));
+      opacity: .6;
+    }
+
+    .steps-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(0, 255, 212, .1);
+      padding: 0 16px;
+      background: rgba(5, 10, 20, 0.5);
+    }
+
+    .steps-tab {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 3px;
+      padding: 16px 24px;
+      color: var(--text-dim);
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all .2s;
+      margin-bottom: -1px;
+    }
+
+    .steps-tab .tab-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+
+    .steps-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .steps-tab.active .tab-dot {
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    .steps-tab:hover:not(.active) {
+      color: var(--text-dim);
+    }
+
+    .steps-content {
+      padding: 28px;
+    }
+
+    /* Steps track */
+    .step-track {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .step-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .step-node:hover .step-circle {
+      transform: scale(1.1);
+    }
+
+    .step-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 255, 212, .2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: rgba(5, 10, 20, 0.7);
+      transition: all .3s;
+    }
+
+    .step-circle.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+      box-shadow: 0 0 18px var(--accent-glow);
+      animation: stepGlow 2.2s ease-in-out infinite;
+    }
+
+    @keyframes stepGlow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 18px rgba(0, 255, 212, .35);
+      }
+
+      50% {
+        box-shadow: 0 0 30px rgba(0, 255, 212, .6), 0 0 56px rgba(0, 255, 212, .2);
+      }
+    }
+
+    .step-circle.done {
+      border-color: var(--pink);
+      color: var(--pink);
+      background: rgba(180, 79, 255, .1);
+    }
+
+    .step-lbl {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-top: 6px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .step-lbl.active {
+      color: var(--accent);
+    }
+
+    .step-lbl.done {
+      color: var(--pink);
+    }
+
+    .step-arrow {
+      width: 28px;
+      height: 2px;
+      background: rgba(0, 255, 212, .2);
+      margin-bottom: 22px;
+      flex-shrink: 0;
+      transition: background .3s;
+    }
+
+    .step-arrow.done {
+      background: var(--pink);
+      box-shadow: 0 0 6px rgba(180, 79, 255, .4);
+    }
+
+    .step-detail-box {
+      background: rgba(5, 10, 20, 0.6);
+      border: 1px solid rgba(0, 255, 212, .12);
+      border-left: 3px solid var(--accent);
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.8;
+      min-height: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step-detail-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: scanLine 3.5s ease-in-out infinite;
+    }
+
+    @keyframes scanLine {
+
+      0%,
+      100% {
+        opacity: .2;
+      }
+
+      50% {
+        opacity: .8;
+      }
+    }
+
+    .step-detail-num {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(0, 255, 212, .45);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .step-detail-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .step-detail-body {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.9;
+    }
+
+    /* ── LEARN ── */
+    .learn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .learn-block {
+      background: rgba(5, 10, 20, 0.6);
+      border: 1px solid rgba(0, 255, 212, .12);
+      border-radius: 12px;
+      padding: 18px;
+      transition: .3s;
+    }
+
+    .learn-block:hover {
+      border-color: rgba(0, 255, 212, .28);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, .35);
+    }
+
+    .learn-block-icon {
+      font-size: 22px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .learn-block h4 {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .learn-block p {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    /* ── ANALYSIS ── */
+    .freq-grid {
+      display: grid;
+      grid-template-columns: repeat(26, 1fr);
+      gap: 3px;
+      margin-top: 14px;
+    }
+
+    .freq-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .freq-bar-track {
+      width: 100%;
+      height: 60px;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .freq-bar {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      min-height: 2px;
+      background: linear-gradient(180deg, var(--accent), var(--accent3));
+      transition: height .6s cubic-bezier(.16, 1, .3, 1);
+      box-shadow: 0 0 6px rgba(0, 255, 212, .3);
+    }
+
+    .freq-letter {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      color: var(--text-muted);
+    }
+
+    .freq-pct {
+      font-size: 7px;
+      color: var(--text-muted);
+    }
+
+    .top-letters {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .top-letter-chip {
+      padding: 10px 16px;
+      border-radius: 12px;
+      text-align: center;
+      min-width: 70px;
+      background: rgba(0, 255, 212, .06);
+      border: 1px solid rgba(0, 255, 212, .2);
+      transition: .3s;
+    }
+
+    .top-letter-chip:hover {
+      background: rgba(0, 255, 212, .14);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 255, 212, .18);
+    }
+
+    .tlc-letter {
+      font-family: 'Orbitron', monospace;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--accent);
+      text-shadow: 0 0 16px rgba(0, 255, 212, .5);
+    }
+
+    .tlc-info {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── NOTIF ── */
+    .notif {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--panel);
+      border: 1px solid var(--accent2);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 1px;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .3s;
+      pointer-events: none;
+    }
+
+    .notif.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .main {
+        grid-template-columns: 1fr;
+        padding: 0 24px 24px;
+      }
+
+      .steps-section {
+        padding: 0 24px 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="particles" id="particles"></div>
+
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>CRYPTOCORE
+    </div>
+    <button class="back-btn" onclick="history.back()">← BACK</button>
+  </div>
+
+  <div class="hero">
+    <div class="hero-title">MONOALPHABETIC</div>
+    <div class="hero-sub">Encrypt &amp; decrypt with a fixed 26-letter permutation key</div>
+  </div>
+
+  <div class="main">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-panel">
+
+      <!-- INPUT -->
+      <div class="panel" style="display:flex;flex-direction:column;">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-dot"></div> INPUT (PLAINTEXT)
+          </div>
+          <span class="char-count" id="inputCount">0/1000</span>
+        </div>
+        <textarea id="toolInput" maxlength="1000" placeholder="Type your secret message here…"
+          oninput="updateInputCount()" style="flex:1;min-height:0;"></textarea>
+        <div class="btn-row">
+          <div class="mode-btns">
+            <button class="mode-btn active" id="encBtn" onclick="setMode('enc')">Encrypt</button>
+            <button class="mode-btn" id="decBtn" onclick="setMode('dec')">Decrypt</button>
+          </div>
+          <button class="action-btn" onclick="runTool()">
+            <span id="encBtnLabel">ENCRYPT</span> →
+          </button>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="panel" id="outputPanel" style="display:flex;flex-direction:column;">
+        <div class="output-header">
+          <div class="panel-title">
+            <div class="panel-title-dot pink"></div> OUTPUT (CIPHERTEXT)
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="char-count" id="outputCount">0/1000</span>
+            <button class="copy-btn" onclick="copyOutput()">COPY</button>
+          </div>
+        </div>
+        <textarea class="output-ta" id="toolOutput" readonly placeholder="Encrypted output appears here…"
+          style="flex:1;min-height:120px;"></textarea>
+        
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Key Panel -->
+    <div class="right-panel">
+      <div class="key-panel">
+        <div class="key-header">
+          <div class="key-title">ACTIVE KEY</div>
+          <button class="rnd-btn" style="width:auto;padding:5px 14px;" onclick="generateKey()">RANDOM</button>
+        </div>
+
+        <div class="shift-control">
+
+          <div class="key-block">
+            <div class="key-block-label">
+              KEY STRING
+              <span
+                style="font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid rgba(0,255,212,0.3);background:rgba(0,255,212,0.1);color:var(--accent);">26-LETTER</span>
+            </div>
+            <div class="key-display-wrap" id="keyDisplay"></div>
+            <div class="key-hint">( unique permutation — every letter maps once )</div>
+          </div>
+
+          <div class="key-block">
+            <div class="key-block-label">CUSTOM KEY INPUT</div>
+            <input class="key-input-field" id="keyInput" maxlength="26" placeholder="Type custom 26-letter key…"
+              oninput="onKeyInput()">
+          </div>
+
+          <button class="copy-key-btn" onclick="copyKey()">COPY KEY</button>
+
+        </div>
+
+        <div class="mapping-section">
+          <div class="mapping-title">⇄ KEY MAPPING PREVIEW</div>
+          <div class="mapping-grid" id="mappingGrid"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM TABS -->
+  <div class="steps-section">
+    <div class="tabs-panel">
+      <div class="steps-tabs">
+        <button class="steps-tab active" id="tab-steps" onclick="switchTab('steps',this)">
+          <div class="tab-dot"></div> STEPS
+        </button>
+        <button class="steps-tab" id="tab-learn" onclick="switchTab('learn',this)">
+          <div class="tab-dot"></div> LEARN
+        </button>
+        <button class="steps-tab" id="tab-analysis" onclick="switchTab('analysis',this)">
+          <div class="tab-dot"></div> ANALYSIS
+        </button>
+      </div>
+
+      <div class="steps-content">
+
+        <!-- STEPS -->
+        <div id="pane-steps">
+          <div class="step-track" id="stepTrack"></div>
+          <div class="step-detail-box" id="stepDetail"></div>
+        </div>
+
+        <!-- LEARN -->
+        <div id="pane-learn" style="display:none;">
+          <div class="learn-grid">
+            <div class="learn-block">
+              <h4>WHAT IS IT?</h4>
+              <p>A substitution cipher where each letter in the plaintext is replaced by another letter using a fixed
+                key a permutation of the 26-letter alphabet.</p>
+            </div>
+            <div class="learn-block">
+              <h4>HOW DOES IT WORK?</h4>
+              <p>Each letter is mapped to another letter consistently throughout the entire message using the
+                26-character key string.</p>
+            </div>
+            <div class="learn-block">
+              <h4>WHERE IS IT USED?</h4>
+              <p>Historically used in ancient encryptions and educational tools to demonstrate basic cryptographic
+                concepts and frequency analysis.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANALYSIS -->
+        <div id="pane-analysis" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:28px;">
+            <div style="flex:1;">
+              <div
+                style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--text-muted);margin-bottom:4px;">
+                FREQUENCY ANALYSIS</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Letter frequency in current
+                ciphertext</div>
+              <div class="freq-grid" id="freqGrid"></div>
+            </div>
+            <div style="min-width:200px;">
+              <div
+                style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--text-muted);margin-bottom:14px;">
+                TOP LETTERS</div>
+              <div class="top-letters" id="topLetters"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    let currentKey = '', mode = 'enc', activeStep = 0;
+
+    const STEPS = [
+      { lb: 'Plaintext', ti: 'Input Plaintext', bo: 'The original message to be encrypted. Only alphabetic characters (A–Z) are substituted; spaces, numbers, and punctuation pass through unchanged.' },
+      { lb: 'Build Table', ti: 'Build the Substitution Table', bo: 'A 26-character permutation key maps each plaintext letter to a unique ciphertext letter. If key[0]="Q" then every "A" becomes "Q". No two plaintext letters share the same ciphertext letter.' },
+      { lb: 'Lookup', ti: 'Look Up Each Letter', bo: 'Each plaintext character is looked up in the substitution table. The position of the letter in the alphabet (A=0 … Z=25) indexes directly into the key string.' },
+      { lb: 'Replace', ti: 'Replace with Mapped Letter', bo: 'The plaintext letter is swapped for its ciphertext counterpart from the table. Case is preserved — a lowercase "a" maps to the lowercase version of the key letter.' },
+      { lb: 'Keep Rest', ti: 'Preserve Non-Alphabetic Characters', bo: 'Spaces, digits, punctuation, and any non-alphabetic characters are copied unchanged into the output, maintaining the original message structure.' },
+      { lb: 'Assemble', ti: 'Assemble the Ciphertext', bo: 'All substituted and preserved characters are placed back in their original positions and order to form the final ciphertext string.' },
+      { lb: 'Ciphertext', ti: 'Output Ciphertext', bo: 'The final encrypted message is ready. To decrypt: build the inverse table (swap keys and values) and apply the same lookup-and-replace process in reverse.' },
+    ];
+
+    /* ── STEPS ── */
+    function buildSteps() {
+      const track = document.getElementById('stepTrack');
+      track.innerHTML = STEPS.map((s, i) => `
+    <div class="step-node" onclick="setStep(${i})">
+      <div class="step-circle ${i < activeStep ? 'done' : i === activeStep ? 'active' : ''}">${i + 1}</div>
+      <div class="step-lbl ${i < activeStep ? 'done' : i === activeStep ? 'active' : ''}">${s.lb}</div>
+    </div>
+    ${i < STEPS.length - 1 ? `<div class="step-arrow ${i < activeStep ? 'done' : ''}"></div>` : ''}`).join('');
+      renderStepDetail();
+    }
+    function renderStepDetail() {
+      const s = STEPS[activeStep];
+      document.getElementById('stepDetail').innerHTML = `
+    <div class="step-detail-num">STEP ${activeStep + 1} OF ${STEPS.length}</div>
+    <div class="step-detail-title">${s.ti}</div>
+    <div class="step-detail-body">${s.bo}</div>`;
+    }
+    function setStep(i) { activeStep = i; buildSteps(); }
+
+    /* ── KEY ── */
+    function generateValidKey() {
+      const a = [...ALPHA];
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; }
+      return a.join('');
+    }
+    function validateKey(k) {
+      k = k.toUpperCase();
+      return k.length === 26 && new Set(k.split('')).size === 26 && /^[A-Z]+$/.test(k);
+    }
+    function updateKeyDisplay() {
+      document.getElementById('keyDisplay').innerHTML = currentKey.split('').map((l, i) =>
+        `<span class="key-letter" style="--dur:${2.2 + Math.random() * 2.5}s;--delay:${i * .07}s">${l} </span>`
+      ).join('');
+    }
+    function buildMappingGrid() {
+      document.getElementById('mappingGrid').innerHTML = ALPHA.map((l, i) => `
+    <div class="map-item">
+      <span class="map-from">${l}</span>
+      <span class="map-arrow">↓</span>
+      <span class="map-to">${currentKey[i] || '?'}</span>
+    </div>`).join('');
+    }
+    function generateKey() {
+      currentKey = generateValidKey();
+      document.getElementById('keyInput').value = currentKey;
+      updateKeyDisplay(); buildMappingGrid();
+    }
+    function copyKey() {
+      navigator.clipboard.writeText(currentKey).then(() => showNotif());
+    }
+    function onKeyInput() {
+      const raw = document.getElementById('keyInput').value.toUpperCase();
+      if (validateKey(raw)) { currentKey = raw; updateKeyDisplay(); buildMappingGrid(); }
+    }
+
+    /* ── CIPHER ── */
+    function applyMono(text, key, decrypt) {
+      const map = {};
+      ALPHA.forEach((l, i) => { if (decrypt) map[key[i]] = l; else map[l] = key[i]; });
+      return text.toUpperCase().split('').map(c => map[c] || c).join('');
+    }
+    function runTool() {
+      const input = document.getElementById('toolInput').value;
+      if (!input.trim()) {
+        document.getElementById('toolOutput').value = '';
+        document.getElementById('outputCount').textContent = '0/1000';
+        buildFreq(''); return;
+      }
+      const output = applyMono(input, currentKey, mode === 'dec');
+      document.getElementById('toolOutput').value = output;
+      document.getElementById('outputCount').textContent = output.length + '/1000';
+      buildFreq(output);
+      // flash
+      const p = document.getElementById('outputPanel');
+      p.style.boxShadow = '0 0 40px rgba(0,255,212,.3)';
+      setTimeout(() => p.style.boxShadow = '', 600);
+    }
+    function updateInputCount() {
+      document.getElementById('inputCount').textContent = document.getElementById('toolInput').value.length + '/1000';
+    }
+    function setMode(m) {
+      mode = m;
+      document.getElementById('encBtn').classList.toggle('active', m === 'enc');
+      document.getElementById('decBtn').classList.toggle('active', m === 'dec');
+      document.getElementById('encBtnLabel').textContent = m === 'enc' ? 'ENCRYPT' : 'DECRYPT';
+      document.getElementById('statusMode').textContent = m === 'enc' ? 'SUBSTITUTION ACTIVE' : 'DECRYPT MODE';
+    }
+    function copyOutput() {
+      const out = document.getElementById('toolOutput').value;
+      if (out) navigator.clipboard.writeText(out).then(() => showNotif());
+    }
+
+    /* ── TABS ── */
+    function switchTab(id, btn) {
+      ['steps', 'learn', 'analysis'].forEach(t => {
+        document.getElementById('pane-' + t).style.display = t === id ? 'block' : 'none';
+      });
+      document.querySelectorAll('.steps-tab').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      if (id === 'analysis') buildFreq(document.getElementById('toolOutput').value || '');
+    }
+
+    /* ── FREQ ANALYSIS ── */
+    function buildFreq(text) {
+      const counts = {}; ALPHA.forEach(l => counts[l] = 0);
+      text.toUpperCase().split('').forEach(c => { if (counts[c] !== undefined) counts[c]++; });
+      const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+      const max = Math.max(...Object.values(counts)) || 1;
+      document.getElementById('freqGrid').innerHTML = ALPHA.map(l => {
+        const pct = (counts[l] / total * 100).toFixed(1);
+        const h = Math.round((counts[l] / max) * 56);
+        return `<div class="freq-bar-wrap">
+      <div class="freq-bar-track"><div class="freq-bar" style="height:${h}px"></div></div>
+      <div class="freq-letter">${l}</div>
+      <div class="freq-pct">${pct}%</div>
+    </div>`;
+      }).join('');
+      const sorted = ALPHA.map(l => ({ l, c: counts[l] })).sort((a, b) => b.c - a.c).slice(0, 5);
+      document.getElementById('topLetters').innerHTML = sorted.map(({ l, c }) => `
+    <div class="top-letter-chip">
+      <div class="tlc-letter">${l}</div>
+      <div class="tlc-info">${c} (${(c / total * 100).toFixed(0)}%)</div>
+    </div>`).join('');
+    }
+
+    /* ── NOTIF ── */
+    function showNotif() {
+      const n = document.getElementById('notif');
+      n.classList.add('show');
+      setTimeout(() => n.classList.remove('show'), 2000);
+    }
+
+    /* ── PARTICLES ── */
+    (function () {
+      const c = document.getElementById('particles');
+      const colors = ['rgba(0,255,212,.6)', 'rgba(79,195,255,.5)', 'rgba(180,79,255,.5)'];
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.background = colors[i % colors.length];
+        p.style.animationDuration = (8 + Math.random() * 12) + 's';
+        p.style.animationDelay = (Math.random() * 15) + 's';
+        c.appendChild(p);
+      }
+    })();
+
+    // INIT
+    currentKey = generateValidKey();
+    document.getElementById('keyInput').value = currentKey;
+    updateKeyDisplay(); buildMappingGrid(); buildSteps(); buildFreq('');
+  </script>
+</body>
+
+</html>

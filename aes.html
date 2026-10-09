@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>AES Cipher</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap');
+
+        :root {
+            /* ── Base backgrounds ── */
+            --bg:          #06000f;
+            --bg2:         #0b0019;
+            /* ── Panels ── */
+            --panel:       rgba(16, 0, 32, 0.88);
+            --panel2:      rgba(22, 0, 44, 0.92);
+            /* ── Borders ── */
+            --border:      rgba(180, 79, 255, 0.13);
+            --border2:     rgba(180, 79, 255, 0.32);
+            /* ── Primary accent — #B44FFF purple ── */
+            --accent:      #B44FFF;
+            --accent2:     #cc80ff;
+            --accent3:     #7a1fd4;
+            --accent-dim:  rgba(180, 79, 255, 0.11);
+            --accent-glow: rgba(180, 79, 255, 0.42);
+            /* ── Text ── */
+            --text:        #f2eaff;
+            --text-dim:    #9b74c2;
+            --text-muted:  #52327a;
+            /* ── Vivid accent colors — all harmonious with purple ── */
+            --pink:        #f06adf;   /* warm fuchsia */
+            --teal:        #6ef5d0;   /* mint-teal */
+            --red:         #ff6b7a;
+            --yellow:      #f9d97a;   /* warm gold */
+            --purple:      #c084fc;   /* soft lilac */
+            --cyan:        #8beeff;   /* icy blue */
+            --lime:        #a3f07a;   /* electric lime */
+            --rose:        #ff8fbc;   /* pastel rose */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ── Atmospheric glow blobs ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 65% 55% at 8% 6%,   rgba(180, 79, 255, 0.13) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 60% at 92% 88%, rgba(110, 245, 208, 0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 55% 42%, rgba(240, 106, 223, 0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 30% 35% at 78% 20%, rgba(139, 238, 255, 0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Grid overlay ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(180, 79, 255, .016) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(180, 79, 255, .016) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── PARTICLES ── */
+        .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .particle  { position: absolute; width: 2px; height: 2px; border-radius: 50%; animation: floatUp linear infinite; opacity: 0; }
+        @keyframes floatUp {
+            0%   { transform: translateY(100vh); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-20px) translateX(30px); opacity: 0; }
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 60px;
+            border-bottom: 1px solid rgba(180, 79, 255, 0.15);
+            background: rgba(6, 0, 15, 0.96);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(24px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 28px;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--teal), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--accent-glow); }
+            50%       { opacity: .5; box-shadow: 0 0 24px var(--accent-glow); }
+        }
+
+        .topbar-center {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            letter-spacing: 5px;
+            color: var(--text-dim);
+        }
+
+        .back-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            background: transparent;
+            border: 1.5px solid rgba(180, 79, 255, 0.32);
+            border-radius: 20px;
+            padding: 10px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            transition: all .3s;
+        }
+        .back-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 0 24px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            text-align: center;
+            padding: 48px 24px 36px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 7px;
+            color: var(--pink);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+        .hero-label::before, .hero-label::after {
+            content: '';
+            width: 60px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--pink));
+        }
+        .hero-label::after { background: linear-gradient(90deg, var(--pink), transparent); }
+
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(52px, 8vw, 96px);
+            font-weight: 900;
+            letter-spacing: 12px;
+            background: linear-gradient(135deg, var(--pink) 0%, var(--accent) 45%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .hero-sub {
+            font-size: 17px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            padding: 0 60px 28px;
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .left-panel > .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ── PANEL ── */
+        .panel {
+            background: rgba(16, 0, 32, 0.88);
+            border: 1px solid rgba(180, 79, 255, 0.13);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--pink), var(--teal));
+            opacity: 0.7;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(180, 79, 255, 0.09);
+            background: rgba(6, 0, 15, 0.5);
+        }
+
+        .panel-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+        .panel-title-dot.pink   { background: var(--pink);   box-shadow: 0 0 8px rgba(240, 106, 223, .5); }
+        .panel-title-dot.purple { background: var(--purple); box-shadow: 0 0 8px rgba(192, 132, 252, .5); }
+        .panel-title-dot.teal   { background: var(--teal);   box-shadow: 0 0 8px rgba(110, 245, 208, .5); }
+
+        .char-count {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 18px 22px;
+            resize: none;
+            min-height: 120px;
+            flex: 1;
+        }
+        textarea::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+        /* ── BTN ROW (RSA style — inside panel, at bottom) ── */
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            padding: 14px 22px;
+            border-top: 1px solid rgba(180, 79, 255, 0.09);
+            background: rgba(6, 0, 15, 0.4);
+            align-items: center;
+        }
+
+        .mode-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border: 1.5px solid rgba(180, 79, 255, 0.22);
+            background: transparent;
+            color: var(--text-dim);
+            transition: all .25s;
+        }
+
+        .mode-btn.active {
+            background: rgba(180, 79, 255, 0.14);
+            border-color: rgba(180, 79, 255, 0.60);
+            color: var(--accent);
+            box-shadow: 0 0 18px rgba(180, 79, 255, 0.22);
+        }
+
+        .mode-btn:not(.active):hover {
+            color: var(--accent);
+            border-color: rgba(180, 79, 255, 0.4);
+        }
+
+        /* ── ACTION BUTTON — RSA style solid gradient ── */
+        .action-btn {
+            flex: 1;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, var(--accent3), var(--accent2));
+            border: none;
+            border-radius: 20px;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(180, 79, 255, 0.35);
+        }
+
+        .action-btn:hover {
+            box-shadow: 0 8px 36px rgba(180, 79, 255, 0.60);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active { transform: translateY(0); }
+
+        /* ── ERROR BANNER ── */
+        .error-banner {
+            display: none;
+            border: 1px solid rgba(255, 107, 122, 0.4);
+            background: rgba(255, 107, 122, 0.08);
+            border-radius: 10px;
+            padding: 12px 22px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--red);
+            letter-spacing: 1px;
+        }
+        .error-banner.show { display: block; }
+
+        /* ── OUTPUT ── */
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(180, 79, 255, 0.09);
+            background: rgba(6, 0, 15, 0.5);
+        }
+
+        .copy-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--accent2);
+            background: rgba(180, 79, 255, 0.08);
+            border: 1px solid rgba(180, 79, 255, 0.25);
+            border-radius: 10px;
+            padding: 6px 16px;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(180, 79, 255, 0.22);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ── KEY PANEL ── */
+        .key-panel {
+            background: rgba(16, 0, 32, 0.88);
+            border: 1px solid rgba(180, 79, 255, 0.13);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .key-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--pink), var(--accent), var(--teal));
+            opacity: 0.6;
+        }
+
+        .key-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(180, 79, 255, 0.09);
+            background: rgba(6, 0, 15, 0.5);
+        }
+
+        .key-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+        }
+
+        .shift-control {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .key-block {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .key-block-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid rgba(180, 79, 255, 0.32);
+            background: rgba(180, 79, 255, 0.10);
+            color: var(--accent);
+        }
+
+        .badge.pink {
+            border-color: rgba(240, 106, 223, 0.35);
+            background: rgba(240, 106, 223, 0.10);
+            color: var(--pink);
+        }
+
+        .badge.purple {
+            border-color: rgba(192, 132, 252, 0.35);
+            background: rgba(192, 132, 252, 0.10);
+            color: var(--purple);
+        }
+
+        .badge.yellow {
+            border-color: rgba(249, 217, 122, 0.35);
+            background: rgba(249, 217, 122, 0.10);
+            color: var(--yellow);
+        }
+
+        /* ── KEY INPUT ── */
+        .key-input {
+            width: 100%;
+            background: rgba(6, 0, 15, 0.7);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            color: var(--accent);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            padding: 10px 14px;
+            outline: none;
+            transition: border-color .2s;
+            letter-spacing: 2px;
+        }
+
+        .key-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 14px var(--accent-dim);
+        }
+
+        .key-input::placeholder {
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        /* ── KEY VALS ── */
+        .key-vals {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .kv-box {
+            background: rgba(6, 0, 15, 0.7);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .kv-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+        }
+
+        .kv-val {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+            word-break: break-all;
+        }
+
+        .kv-val.pink   { color: var(--pink); }
+        .kv-val.purple { color: var(--purple); }
+        .kv-val.yellow { color: var(--yellow); }
+        .kv-val.cyan   { color: var(--cyan); }
+        .kv-val.teal   { color: var(--teal); }
+        .kv-val.lime   { color: var(--lime); }
+        .kv-val.sm     { font-size: 9px; letter-spacing: .5px; }
+
+        .rnd-btn {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            background: rgba(240, 106, 223, 0.07);
+            border: 1px solid rgba(240, 106, 223, 0.25);
+            border-radius: 10px;
+            color: var(--pink);
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .rnd-btn:hover {
+            color: #fff;
+            border-color: var(--pink);
+            background: rgba(240, 106, 223, 0.15);
+        }
+
+        /* ── DIVIDER ── */
+        .divider {
+            height: 1px;
+            background: rgba(180, 79, 255, 0.12);
+            margin: 2px 0;
+        }
+
+        /* ── STATE MATRIX ── */
+        .state-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 10px 12px;
+        }
+
+        .state-cell {
+            background: rgba(6, 0, 15, 0.7);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 2px;
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--teal);
+            letter-spacing: 1px;
+            transition: all .3s;
+        }
+
+        .state-cell.active {
+            border-color: var(--teal);
+            background: rgba(110, 245, 208, .10);
+            box-shadow: 0 0 8px rgba(110, 245, 208, .4);
+            color: var(--teal);
+        }
+
+        .state-cell.done {
+            border-color: var(--cyan);
+            background: rgba(139, 238, 255, .08);
+            color: var(--cyan);
+        }
+
+        /* ── ROUND SELECTOR ── */
+        .round-selector-wrap {
+            padding: 12px 16px 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .round-selector-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        #roundBtns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .round-btn {
+            padding: 5px 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1px;
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            background: rgba(6, 0, 15, 0.6);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .round-btn.active {
+            background: rgba(110, 245, 208, .12);
+            border-color: var(--teal);
+            color: var(--teal);
+            box-shadow: 0 0 6px rgba(110,245,208,.3);
+        }
+        .round-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* ── STEPS SECTION ── */
+        .steps-section {
+            position: relative;
+            z-index: 1;
+            padding: 0 60px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tabs-panel {
+            background: rgba(16, 0, 32, 0.88);
+            border: 1px solid rgba(180, 79, 255, 0.13);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            position: relative;
+        }
+
+        .tabs-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--pink));
+            opacity: 0.65;
+        }
+
+        .steps-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(180, 79, 255, 0.10);
+            padding: 0 16px;
+            background: rgba(6, 0, 15, 0.5);
+            flex-wrap: wrap;
+        }
+
+        .steps-tab {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            padding: 16px 24px;
+            color: var(--text-dim);
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all .2s;
+            margin-bottom: -1px;
+        }
+
+        .steps-tab .tab-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .steps-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .steps-tab.active .tab-dot {
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        .steps-tab:hover:not(.active) { color: var(--text-dim); }
+
+        .steps-content { padding: 28px; }
+
+        /* ── Steps track ── */
+        .steps-row {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .step-num {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            border: 2px solid rgba(180, 79, 255, 0.22);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(6, 0, 15, 0.7);
+            transition: all .3s;
+        }
+
+        .step-item.active .step-num {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .step-item.done .step-num {
+            border-color: var(--pink);
+            color: var(--pink);
+            background: rgba(240, 106, 223, .10);
+        }
+
+        .step-lbl {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-top: 6px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .step-item.active .step-lbl { color: var(--accent); }
+        .step-item.done .step-lbl   { color: var(--pink); }
+
+        .step-connector {
+            width: 28px; height: 2px;
+            background: rgba(180, 79, 255, 0.18);
+            margin-bottom: 22px;
+            flex-shrink: 0;
+        }
+
+        .step-connector.done { background: var(--pink); }
+
+        .step-detail {
+            background: rgba(6, 0, 15, 0.6);
+            border: 1px solid rgba(180, 79, 255, 0.12);
+            border-left: 3px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.8;
+            min-height: 80px;
+        }
+
+        .step-detail span {
+            color: var(--accent);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .formula-box {
+            margin-top: 12px;
+            padding: 12px 18px;
+            background: rgba(6, 0, 15, 0.7);
+            border: 1px solid rgba(180, 79, 255, 0.16);
+            border-radius: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--accent);
+            letter-spacing: 1px;
+            line-height: 2.2;
+        }
+
+        /* ── LEARN ── */
+        .learn-content {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .learn-content.active { display: grid; }
+
+        .learn-block {
+            background: rgba(6, 0, 15, 0.6);
+            border: 1px solid rgba(180, 79, 255, 0.13);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .learn-block h4 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .learn-block p {
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        .mono {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--accent);
+        }
+
+        /* ── ANALYSIS BARS ── */
+        .freq-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 56px;
+            margin-bottom: 6px;
+        }
+
+        .freq-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            gap: 2px;
+        }
+
+        .freq-bar {
+            width: 100%;
+            background: linear-gradient(180deg, var(--accent), var(--accent3));
+            border-radius: 2px;
+            min-height: 2px;
+            transition: height .4s ease;
+            opacity: .85;
+        }
+
+        .freq-letter {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 7px;
+            color: var(--text-muted);
+        }
+
+        /* ── NOTIF ── */
+        .notif {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--panel);
+            border: 1px solid var(--accent2);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--accent);
+            letter-spacing: 1px;
+            z-index: 999;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all .3s;
+            pointer-events: none;
+        }
+
+        .notif.show { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 900px) {
+            .main          { grid-template-columns: 1fr; padding: 0 24px 24px; }
+            .right-panel   { order: -1; }
+            .steps-section { padding: 0 24px 30px; }
+            .topbar        { padding: 16px 24px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="particles" id="particles"></div>
+
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-dot"></div>CRYPTOCORE
+        </div>
+        <button class="back-btn" onclick="history.back()">← BACK</button>
+    </div>
+
+    <div class="hero">
+        <div class="hero-title">AES</div>
+        <div class="hero-sub">Advanced Encryption Standard — 128-bit block · 128-bit key · 10 rounds</div>
+    </div>
+
+    <div class="main">
+
+        <!-- LEFT -->
+        <div class="left-panel">
+
+            <!-- INPUT -->
+            <div class="panel" style="display:flex;flex-direction:column;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot"></div> INPUT MESSAGE
+                    </div>
+                    <div class="char-count" id="inCount">0 chars</div>
+                </div>
+                <textarea id="inputText" placeholder="Type a message (first 16 chars / 128 bits used)…"
+                    oninput="updateCount();updateAnalysis()" style="flex:1;"></textarea>
+                <div class="btn-row">
+                    <div class="mode-btns">
+                        <button class="mode-btn active" id="btnEncrypt" onclick="setMode('encrypt')">Encrypt</button>
+                        <button class="mode-btn" id="btnDecrypt" onclick="setMode('decrypt')">Decrypt</button>
+                    </div>
+                    <button class="action-btn" onclick="processText()">
+                        <span id="actionLabel">ENCRYPT</span>
+                        <span>→</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="error-banner" id="errBanner"></div>
+
+            <!-- OUTPUT -->
+            <div class="panel" style="display:flex;flex-direction:column;">
+                <div class="output-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot pink"></div> OUTPUT
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <div class="char-count" id="outCount">0 bytes</div>
+                        <button class="copy-btn" onclick="copyOutput()">COPY</button>
+                    </div>
+                </div>
+                <textarea id="outputText" placeholder="Encrypted output appears here…" readonly style="flex:1;"></textarea>
+                
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="right-panel">
+
+            <!-- KEY SETUP -->
+            <div class="key-panel">
+                <div class="key-header">
+                    <div class="key-title">KEY SETUP</div>
+                    <button class="rnd-btn" style="width:auto;padding:6px 14px" onclick="randomKey()">⟳ RANDOM</button>
+                </div>
+                <div class="shift-control">
+
+                    <div class="key-block">
+                        <div class="key-block-label">KEY (ASCII) <span class="badge pink">AES-128 · 16 CHARS</span></div>
+                        <input class="key-input" id="aesKey" maxlength="16" placeholder="16-char key…"
+                            oninput="updateKeyDisplay()" value="ThisIsASecretKey" />
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="key-vals">
+                        <div class="kv-box">
+                            <div class="kv-label">KEY HEX</div>
+                            <div class="kv-val sm" id="kv-hex">—</div>
+                        </div>
+                        <div class="kv-box">
+                            <div class="kv-label">ROUNDS</div>
+                            <div class="kv-val teal" id="kv-rounds">10</div>
+                        </div>
+                        <div class="kv-box">
+                            <div class="kv-label">ROUND KEYS</div>
+                            <div class="kv-val purple" id="kv-rkcount">11</div>
+                        </div>
+                        <div class="kv-box">
+                            <div class="kv-label">BLOCK SIZE</div>
+                            <div class="kv-val yellow">128 b</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- STATE MATRIX -->
+            <div class="key-panel">
+                <div class="key-header">
+                    <div class="key-title">STATE MATRIX (4×4)</div>
+                    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--teal);letter-spacing:2px;text-shadow:0 0 8px rgba(110,245,208,.5)" id="stateRoundLabel">AWAITING INPUT</div>
+                </div>
+                <div id="roundSelector" style="padding:6px 12px 0;">
+                    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--lime);letter-spacing:2px;margin-bottom:6px;">VIEW ROUND STATE</div>
+                    <div id="roundBtns" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+                </div>
+                <div class="state-grid" id="stateGrid"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BOTTOM STEPS SECTION -->
+    <div class="steps-section">
+        <div class="tabs-panel">
+            <div class="steps-tabs">
+                <button class="steps-tab active" id="tab-steps" onclick="switchTab('steps')">
+                    <div class="tab-dot"></div> STEPS
+                </button>
+                <button class="steps-tab" id="tab-learn" onclick="switchTab('learn')">
+                    <div class="tab-dot"></div> LEARN
+                </button>
+            </div>
+            <div class="steps-content">
+
+                <!-- STEPS PANE -->
+                <div id="pane-steps">
+                    <div class="steps-row">
+                        <div class="step-item active" id="s1" onclick="setStep(1)">
+                            <div class="step-num">1</div>
+                            <div class="step-lbl">Key Expand</div>
+                        </div>
+                        <div class="step-connector" id="con1"></div>
+                        <div class="step-item" id="s2" onclick="setStep(2)">
+                            <div class="step-num">2</div>
+                            <div class="step-lbl">Add RK₀</div>
+                        </div>
+                        <div class="step-connector" id="con2"></div>
+                        <div class="step-item" id="s3" onclick="setStep(3)">
+                            <div class="step-num">3</div>
+                            <div class="step-lbl">SubBytes</div>
+                        </div>
+                        <div class="step-connector" id="con3"></div>
+                        <div class="step-item" id="s4" onclick="setStep(4)">
+                            <div class="step-num">4</div>
+                            <div class="step-lbl">ShiftRows</div>
+                        </div>
+                        <div class="step-connector" id="con4"></div>
+                        <div class="step-item" id="s5" onclick="setStep(5)">
+                            <div class="step-num">5</div>
+                            <div class="step-lbl">MixCols</div>
+                        </div>
+                        <div class="step-connector" id="con5"></div>
+                        <div class="step-item" id="s6" onclick="setStep(6)">
+                            <div class="step-num">6</div>
+                            <div class="step-lbl">Add RKᵢ</div>
+                        </div>
+                        <div class="step-connector" id="con6"></div>
+                        <div class="step-item" id="s7" onclick="setStep(7)">
+                            <div class="step-num">7</div>
+                            <div class="step-lbl">Repeat ×N</div>
+                        </div>
+                        <div class="step-connector" id="con7"></div>
+                        <div class="step-item" id="s8" onclick="setStep(8)">
+                            <div class="step-num">8</div>
+                            <div class="step-lbl">Final Out</div>
+                        </div>
+                    </div>
+                    <div class="step-detail" id="stepDetail"></div>
+                </div>
+
+                <!-- LEARN PANE -->
+                <div id="pane-learn" style="display:none">
+                    <div class="learn-content active">
+                        <div class="learn-block">
+                            <h4>WHAT IS AES?</h4>
+                            <p>AES (Advanced Encryption Standard, 2001) replaced DES as the global symmetric encryption
+                                standard. It operates on 128-bit blocks using substitution-permutation networks, with a 128-bit key and 10 rounds. It has no known practical attacks.
+                            </p>
+                        </div>
+                        <div class="learn-block">
+                            <h4>KEY EXPANSION</h4>
+                            <p>AES derives a set of round keys from the original key using a key schedule. For AES-128 this
+                                produces 11 round keys (one initial + 10 per round). Each round key uses <strong
+                                    class="mono">SubWord</strong> (S-box lookup), <strong class="mono">RotWord</strong>
+                                (byte rotation), and XOR with <strong class="mono">Rcon</strong> (round constants).</p>
+                        </div>
+                        <div class="learn-block">
+                            <h4>SUBBYTES</h4>
+                            <p>Each of the 16 state bytes is independently replaced by a value from the <strong
+                                    class="mono">AES S-box</strong> — a fixed 256-entry lookup table derived from the
+                                multiplicative inverse in GF(2⁸) followed by an affine transformation. This is the
+                                non-linear step that provides confusion.</p>
+                            <div class="formula-box">state[i][j] = S_BOX[state[i][j]]</div>
+                        </div>
+                        <div class="learn-block">
+                            <h4>SHIFTROWS</h4>
+                            <p>The four rows of the 4×4 state matrix are cyclically shifted left: row 0 by 0, row 1 by 1,
+                                row 2 by 2, row 3 by 3 bytes. This ensures that bytes from different columns mix across
+                                rounds, providing diffusion across the entire block.</p>
+                        </div>
+                        <div class="learn-block">
+                            <h4>MIXCOLUMNS</h4>
+                            <p>Each column of 4 bytes is treated as a polynomial over GF(2⁸) and multiplied by a fixed
+                                matrix. This spreads each input byte to affect all 4 output bytes of the column — creating
+                                full <strong class="mono">diffusion</strong> so a single-bit change affects the entire state
+                                after just 2 rounds.</p>
+                            <div class="formula-box">c(x) = a(x) · M(x) mod (x⁴+1)</div>
+                        </div>
+                        <div class="learn-block">
+                            <h4>ADDROUNDKEY</h4>
+                            <p>The current state is XORed with the round key (a 128-bit portion of the expanded key). This
+                                is the only step that uses the secret key. Applied before round 1 and at the end of each
+                                round (including the final round which skips MixColumns).</p>
+                            <div class="formula-box">state ⊕= roundKey[i]</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        /* ═══════════════════════════════════════════════════════
+           AES-128/192/256 — complete from scratch, no libraries
+           Implements: KeyExpansion · SubBytes · ShiftRows ·
+                       MixColumns · AddRoundKey · InvSubBytes ·
+                       InvShiftRows · InvMixColumns
+        ═══════════════════════════════════════════════════════ */
+
+        /* ── AES S-BOX ── */
+        const SBOX = [
+            0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
+            0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
+            0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
+            0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75,
+            0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84,
+            0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf,
+            0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8,
+            0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2,
+            0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73,
+            0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb,
+            0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79,
+            0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08,
+            0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a,
+            0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e,
+            0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
+            0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
+        ];
+
+        /* ── INVERSE S-BOX ── */
+        const INV_SBOX = new Uint8Array(256);
+        for (let i = 0; i < 256; i++) INV_SBOX[SBOX[i]] = i;
+
+        /* ── RCON ── */
+        const RCON = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36,
+            0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a];
+
+        /* ── GF(2⁸) MULTIPLICATION ── */
+        function gmul(a, b) {
+            let p = 0, hiBitSet;
+            for (let i = 0; i < 8; i++) {
+                if (b & 1) p ^= a;
+                hiBitSet = a & 0x80;
+                a = (a << 1) & 0xff;
+                if (hiBitSet) a ^= 0x1b;
+                b >>= 1;
+            }
+            return p;
+        }
+
+        /* ── KEY EXPANSION ── */
+        function keyExpansion(keyBytes, nk) {
+            const nr = nk + 6;
+            const totalWords = 4 * (nr + 1);
+            const w = [];
+            for (let i = 0; i < nk; i++) {
+                w[i] = [keyBytes[4 * i], keyBytes[4 * i + 1], keyBytes[4 * i + 2], keyBytes[4 * i + 3]];
+            }
+            for (let i = nk; i < totalWords; i++) {
+                let temp = [...w[i - 1]];
+                if (i % nk === 0) {
+                    temp = [temp[1], temp[2], temp[3], temp[0]];
+                    temp = temp.map(b => SBOX[b]);
+                    temp[0] ^= RCON[(i / nk) - 1];
+                } else if (nk > 6 && i % nk === 4) {
+                    temp = temp.map(b => SBOX[b]);
+                }
+                w[i] = w[i - nk].map((b, j) => b ^ temp[j]);
+            }
+            const roundKeys = [];
+            for (let r = 0; r <= nr; r++) {
+                const rk = [];
+                for (let c = 0; c < 4; c++) rk.push(...w[r * 4 + c]);
+                roundKeys.push(rk);
+            }
+            return { roundKeys, nr };
+        }
+
+        /* ── STATE HELPERS ── */
+        function bytesToState(bytes) {
+            const s = Array.from({ length: 4 }, () => new Array(4).fill(0));
+            for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) s[r][c] = bytes[c * 4 + r];
+            return s;
+        }
+        function stateToBytes(s) {
+            const b = [];
+            for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) b.push(s[r][c]);
+            return b;
+        }
+        function xorState(s, rk) {
+            const b = stateToBytes(s);
+            return bytesToState(b.map((v, i) => v ^ rk[i]));
+        }
+
+        /* ── SUB BYTES ── */
+        function subBytes(s)    { return s.map(row => row.map(b => SBOX[b])); }
+        function invSubBytes(s) { return s.map(row => row.map(b => INV_SBOX[b])); }
+
+        /* ── SHIFT ROWS ── */
+        function shiftRows(s)    { return s.map((row, r) => [...row.slice(r), ...row.slice(0, r)]); }
+        function invShiftRows(s) { return s.map((row, r) => [...row.slice(4 - r), ...row.slice(0, 4 - r)]); }
+
+        /* ── MIX COLUMNS ── */
+        function mixColumns(s) {
+            const ns = Array.from({ length: 4 }, () => new Array(4).fill(0));
+            for (let c = 0; c < 4; c++) {
+                ns[0][c] = gmul(0x02, s[0][c]) ^ gmul(0x03, s[1][c]) ^ s[2][c] ^ s[3][c];
+                ns[1][c] = s[0][c] ^ gmul(0x02, s[1][c]) ^ gmul(0x03, s[2][c]) ^ s[3][c];
+                ns[2][c] = s[0][c] ^ s[1][c] ^ gmul(0x02, s[2][c]) ^ gmul(0x03, s[3][c]);
+                ns[3][c] = gmul(0x03, s[0][c]) ^ s[1][c] ^ s[2][c] ^ gmul(0x02, s[3][c]);
+            }
+            return ns;
+        }
+        function invMixColumns(s) {
+            const ns = Array.from({ length: 4 }, () => new Array(4).fill(0));
+            for (let c = 0; c < 4; c++) {
+                ns[0][c] = gmul(0x0e, s[0][c]) ^ gmul(0x0b, s[1][c]) ^ gmul(0x0d, s[2][c]) ^ gmul(0x09, s[3][c]);
+                ns[1][c] = gmul(0x09, s[0][c]) ^ gmul(0x0e, s[1][c]) ^ gmul(0x0b, s[2][c]) ^ gmul(0x0d, s[3][c]);
+                ns[2][c] = gmul(0x0d, s[0][c]) ^ gmul(0x09, s[1][c]) ^ gmul(0x0e, s[2][c]) ^ gmul(0x0b, s[3][c]);
+                ns[3][c] = gmul(0x0b, s[0][c]) ^ gmul(0x0d, s[1][c]) ^ gmul(0x09, s[2][c]) ^ gmul(0x0e, s[3][c]);
+            }
+            return ns;
+        }
+
+        /* ── AES ENCRYPT BLOCK ── */
+        function aesEncryptBlock(plainBytes, keyBytes, nk) {
+            const { roundKeys, nr } = keyExpansion(keyBytes, nk);
+            let state = bytesToState(plainBytes.slice(0, 16));
+            const snapshots = [];
+            state = xorState(state, roundKeys[0]);
+            snapshots.push({ round: 0, label: 'AddRK₀', state: stateToBytes(state) });
+            for (let r = 1; r <= nr; r++) {
+                state = subBytes(state);
+                snapshots.push({ round: r, label: 'SubBytes', state: stateToBytes(state) });
+                state = shiftRows(state);
+                snapshots.push({ round: r, label: 'ShiftRows', state: stateToBytes(state) });
+                if (r < nr) {
+                    state = mixColumns(state);
+                    snapshots.push({ round: r, label: 'MixCols', state: stateToBytes(state) });
+                }
+                state = xorState(state, roundKeys[r]);
+                snapshots.push({ round: r, label: 'AddRKᵢ', state: stateToBytes(state) });
+            }
+            return { cipherBytes: stateToBytes(state), roundKeys, nr, snapshots };
+        }
+
+        /* ── AES DECRYPT BLOCK ── */
+        function aesDecryptBlock(cipherBytes, keyBytes, nk) {
+            const { roundKeys, nr } = keyExpansion(keyBytes, nk);
+            let state = bytesToState(cipherBytes.slice(0, 16));
+            state = xorState(state, roundKeys[nr]);
+            for (let r = nr - 1; r >= 0; r--) {
+                state = invShiftRows(state);
+                state = invSubBytes(state);
+                state = xorState(state, roundKeys[r]);
+                if (r > 0) state = invMixColumns(state);
+            }
+            return { plainBytes: stateToBytes(state) };
+        }
+
+        /* ── HELPERS ── */
+        function textToBytes(text, len) {
+            const b = [];
+            for (let i = 0; i < len; i++) b.push(i < text.length ? text.charCodeAt(i) : 0x20);
+            return b;
+        }
+        function bytesToHex(bytes) { return bytes.map(b => b.toString(16).padStart(2, '0')).join(''); }
+        function hexToBytes(hex) {
+            const b = [];
+            for (let i = 0; i < hex.length; i += 2) b.push(parseInt(hex.substr(i, 2), 16));
+            return b;
+        }
+        function stateHex(bytes) { return bytes.map(b => b.toString(16).padStart(2, '0')).join(' '); }
+        function h(b) { return b.toString(16).padStart(2, '0').toUpperCase(); }
+
+        /* ── STATE ── */
+        let mode = 'encrypt';
+        const keySize = 128;
+        let lastSnapshots = [];
+        let lastNr = 10;
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btnEncrypt').className = 'mode-btn' + (m === 'encrypt' ? ' active' : '');
+            document.getElementById('btnDecrypt').className = 'mode-btn' + (m === 'decrypt' ? ' active' : '');
+            document.getElementById('actionLabel').textContent = m === 'encrypt' ? 'ENCRYPT' : 'DECRYPT';
+            const inputEl  = document.getElementById('inputText');
+            const outputEl = document.getElementById('outputText');
+            inputEl.value  = '';
+            outputEl.value = '';
+            updateCount();
+            updateAnalysis();
+            if (m === 'encrypt') {
+                inputEl.placeholder  = 'Type a message (first 16 chars / 128 bits used)…';
+                outputEl.placeholder = 'Encrypted output appears here…';
+            } else {
+                inputEl.placeholder  = 'Paste 32 hex chars to decrypt…';
+                outputEl.placeholder = 'Decrypted plaintext appears here…';
+            }
+            document.getElementById('statusMode').textContent = m === 'encrypt' ? 'AES ACTIVE' : 'DECRYPT MODE';
+            const errBanner = document.getElementById('errBanner');
+            if (errBanner) errBanner.classList.remove('show');
+        }
+
+        function getNk()     { return keySize === 128 ? 4 : keySize === 192 ? 6 : 8; }
+        function getKeyLen() { return keySize / 8; }
+
+        /* ── KEY DISPLAY ── */
+        function getKeyBytes() {
+            const raw = (document.getElementById('aesKey').value + ' '.repeat(32)).slice(0, getKeyLen());
+            return textToBytes(raw, getKeyLen());
+        }
+        function updateKeyDisplay() {
+            const kb = getKeyBytes();
+            const nk = getNk();
+            const { roundKeys, nr } = keyExpansion(kb, nk);
+            document.getElementById('kv-hex').textContent    = bytesToHex(kb).toUpperCase();
+            document.getElementById('kv-rounds').textContent = nr;
+            document.getElementById('kv-rkcount').textContent = nr + 1;
+            lastNr = nr;
+        }
+
+        let allSnapshots = [];
+
+        function buildRoundSelector(snapshots, nr, disabled = false) {
+            allSnapshots = snapshots;
+            const container = document.getElementById('roundSelector');
+            const btns      = document.getElementById('roundBtns');
+            btns.innerHTML  = '';
+            const roundStates = [];
+            const r0 = snapshots.find(s => s.round === 0);
+            if (r0) roundStates.push({ label: 'R0', title: 'After AddRK₀', state: r0.state });
+            for (let r = 1; r <= nr; r++) {
+                const snap = [...snapshots].reverse().find(s => s.round === r && s.label === 'AddRKᵢ');
+                if (snap) roundStates.push({ label: 'R' + r, title: r === nr ? 'Final (R' + r + ')' : 'After R' + r, state: snap.state });
+            }
+            roundStates.forEach((rs, i) => {
+                const btn = document.createElement('button');
+                const isLast = i === roundStates.length - 1;
+                btn.className = 'round-btn' + (isLast ? ' active' : '') + (disabled ? ' disabled' : '');
+                btn.textContent = rs.label;
+                btn.title = disabled ? 'Encrypt a message first' : rs.title;
+                if (!disabled) {
+                    btn.onclick = () => {
+                        btns.querySelectorAll('.round-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        buildStateGrid(rs.state);
+                        document.getElementById('stateRoundLabel').textContent = rs.title.toUpperCase();
+                    };
+                }
+                btns.appendChild(btn);
+            });
+            container.style.display = 'block';
+        }
+
+        function processText() {
+            const text      = document.getElementById('inputText').value;
+            const kb        = getKeyBytes();
+            const nk        = getNk();
+            const errBanner = document.getElementById('errBanner');
+            if (errBanner) errBanner.classList.remove('show');
+            if (!text.trim()) return;
+
+            if (mode === 'encrypt') {
+                const pb = textToBytes(text, 16);
+                const { cipherBytes, roundKeys, nr, snapshots } = aesEncryptBlock(pb, kb, nk);
+                const hexOut = bytesToHex(cipherBytes).toUpperCase();
+                document.getElementById('outputText').value = hexOut;
+                document.getElementById('outCount').textContent = '16 bytes';
+                document.getElementById('statusMode').textContent = 'AES ENCRYPTED';
+                buildStateGrid(cipherBytes);
+                document.getElementById('stateRoundLabel').textContent = 'FINAL (R' + nr + ')';
+                buildRoundSelector(snapshots, nr);
+                lastNr = nr;
+                for (let i = 1; i <= 8; i++) setStepState(i, i < 8 ? 'done' : 'active');
+                setStep(8);
+            } else {
+                const hexIn = text.trim().replace(/\s/g, '');
+                if (!/^[0-9a-fA-F]{32}$/.test(hexIn)) {
+                    const b = document.getElementById('errBanner');
+                    if (b) { b.textContent = '⚠ Decrypt needs exactly 32 hex chars (16 bytes).'; b.classList.add('show'); }
+                    return;
+                }
+                const cipher = hexToBytes(hexIn);
+                const { plainBytes } = aesDecryptBlock(cipher, kb, nk);
+                const plainText = plainBytes.map(b => b >= 32 && b < 127 ? String.fromCharCode(b) : '.').join('');
+                document.getElementById('outputText').value = plainText;
+                document.getElementById('outCount').textContent = '16 chars';
+                document.getElementById('statusMode').textContent = 'AES DECRYPTED';
+                buildStateGrid(plainBytes);
+                document.getElementById('stateRoundLabel').textContent = 'AFTER DECRYPT';
+                document.getElementById('roundSelector').style.display = 'none';
+                for (let i = 1; i <= 8; i++) setStepState(i, i < 8 ? 'done' : 'active');
+                setStep(8);
+            }
+        }
+
+        function copyOutput() {
+            const val = document.getElementById('outputText').value;
+            if (!val) return;
+            navigator.clipboard.writeText(val);
+            const n = document.getElementById('notif');
+            n.classList.add('show');
+            setTimeout(() => n.classList.remove('show'), 2000);
+        }
+
+        function updateCount() {
+            document.getElementById('inCount').textContent = document.getElementById('inputText').value.length + ' chars';
+        }
+
+        function randomKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$';
+            let k = '';
+            for (let i = 0; i < getKeyLen(); i++) k += chars[Math.floor(Math.random() * chars.length)];
+            document.getElementById('aesKey').value = k;
+            updateKeyDisplay();
+        }
+
+        /* ── STATE MATRIX DISPLAY ── */
+        function buildStateGrid(bytes) {
+            const grid = document.getElementById('stateGrid');
+            grid.innerHTML = '';
+            for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'state-cell';
+                cell.textContent = h(bytes[c * 4 + r]);
+                grid.appendChild(cell);
+            }
+        }
+        function initStateGrid() {
+            const grid = document.getElementById('stateGrid');
+            grid.innerHTML = '';
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'state-cell';
+                cell.textContent = '??';
+                grid.appendChild(cell);
+            }
+        }
+
+        /* ── STEP TEXTS ── */
+        const stepTexts = {
+            1: `<strong style="color:var(--accent)">KEY EXPANSION</strong><br>
+                The first step in AES is generating a set of <span>Round Keys</span> from the original key using the <span>Key Schedule</span> algorithm.
+                For AES-128, this produces <span>11 round keys</span> (1 initial + 10 per round) derived from a 16-byte key.
+                Each round key is used exclusively in its corresponding <span>AddRoundKey</span> step.
+                The process relies on <span>SubWord</span> (S-Box substitution), <span>RotWord</span> (byte rotation), and <span>XOR</span> with round constants <span>Rcon</span>.`,
+            2: `<strong style="color:var(--accent)">INITIAL ADD ROUND KEY (AddRK₀)</strong><br>
+                Before any round begins, every byte of the plaintext is <span>XOR</span>ed with <span>RoundKey[0]</span> — which is identical to the original key.
+                This immediately blinds the data before the actual rounds start, preventing an attacker from analysing the raw input.
+                The result is called the <span>Initial State</span> and feeds directly into Round 1.
+                <div class="formula-box">State[i] = Plaintext[i] ⊕ RoundKey₀[i]</div>`,
+            3: `<strong style="color:var(--accent)">SUBBYTES — Non-Linear Substitution</strong><br>
+                Each of the 16 bytes in the State is independently replaced by a value looked up in the <span>AES S-Box</span> — a fixed 256-entry table.
+                The S-Box is derived from the multiplicative inverse in <span>GF(2⁸)</span> followed by an affine transformation, making it highly resistant to linear and differential cryptanalysis.
+                This is the <span>only non-linear step</span> in AES — without it the cipher would be breakable with linear algebra.
+                <div class="formula-box">State[i][j] = S_BOX[ State[i][j] ]</div>`,
+            4: `<strong style="color:var(--accent)">SHIFTROWS — Row Permutation</strong><br>
+                The four rows of the 4×4 State matrix are cyclically shifted left by an increasing offset:
+                <span>Row 0</span>: no shift · <span>Row 1</span>: shift 1 byte · <span>Row 2</span>: shift 2 bytes · <span>Row 3</span>: shift 3 bytes.
+                This ensures bytes from different columns get spread across columns in subsequent steps, achieving <span>inter-column diffusion</span> across rounds.`,
+            5: `<strong style="color:var(--accent)">MIXCOLUMNS — Column Mixing</strong><br>
+                Each of the four columns is treated as a polynomial over <span>GF(2⁸)</span> and multiplied by a fixed matrix.
+                The result: every input byte influences all 4 output bytes of that column — a single bit change cascades across the entire State within just 2 rounds.
+                This is AES's primary <span>diffusion</span> step. It is skipped in the final round because its effect would be cancelled by the following AddRoundKey.
+                <div class="formula-box">col(x) = col(x) · M(x)  mod (x⁴ + 1)  over GF(2⁸)</div>`,
+            6: `<strong style="color:var(--accent)">ADD ROUND KEY (AddRKᵢ)</strong><br>
+                At the end of every round, the current State is <span>XOR</span>ed with <span>RoundKey[i]</span> derived from the Key Expansion.
+                This is the <span>only step</span> in AES that injects the secret key into the computation — every other step is fixed and publicly known.
+                Without this step the entire cipher could be computed without knowing the key. It is applied every round, including the final one.
+                <div class="formula-box">State[i] = State[i] ⊕ RoundKey[round][i]</div>`,
+            7: `<strong style="color:var(--accent)">ROUNDS REPETITION</strong><br>
+                The sequence <span>SubBytes → ShiftRows → MixColumns → AddRoundKey</span> repeats for the required number of rounds:
+                <span>AES-128</span>: 10 rounds · <span>AES-192</span>: 12 rounds · <span>AES-256</span>: 14 rounds.
+                The final round omits <span>MixColumns</span> — it would add no extra security without an AddRoundKey after it.
+                Each round deepens the entanglement of data and key until the output is computationally indistinguishable from random noise.`,
+            8: `<strong style="color:var(--accent)">FINAL OUTPUT</strong><br>
+                Once all rounds complete, the 4×4 State matrix is serialised back into a 16-byte (128-bit) sequence — the <span>Ciphertext</span>.
+                The output is displayed as <span>32 hex characters</span> representing the fully encrypted block.
+                To decrypt, the steps are reversed: <span>InvShiftRows → InvSubBytes → AddRoundKey → InvMixColumns</span> applied in reverse round order using the same key.
+                AES has no known practical attacks — the best documented attack still requires <span>2¹²⁶</span> operations, making it computationally infeasible.`
+        };
+
+        function setStepState(i, state) {
+            const el = document.getElementById('s' + i);
+            el.className = 'step-item ' + state;
+            if (i < 8) { const c = document.getElementById('con' + i); if (c) c.className = 'step-connector' + (state === 'done' ? ' done' : ''); }
+        }
+        function setStep(n) {
+            for (let i = 1; i <= 8; i++) {
+                if (i < n) setStepState(i, 'done');
+                else if (i === n) setStepState(i, 'active');
+                else setStepState(i, '');
+            }
+            document.getElementById('stepDetail').innerHTML = stepTexts[n];
+        }
+        function switchTab(tab) {
+            ['steps', 'learn'].forEach(t => {
+                document.getElementById('tab-' + t).className = 'steps-tab' + (t === tab ? ' active' : '');
+                document.getElementById('pane-' + t).style.display = t === tab ? 'block' : 'none';
+            });
+        }
+
+        /* ── ANALYSIS ── */
+        function getFreq(text) {
+            const f = Array(26).fill(0);
+            for (const c of text.toUpperCase()) { const code = c.charCodeAt(0) - 65; if (code >= 0 && code < 26) f[code]++; }
+            return f;
+        }
+        function drawFreqBars(id, vals) {
+            const container = document.getElementById(id); if (!container) return;
+            container.innerHTML = '';
+            const max = Math.max(...vals, 1);
+            vals.slice(0, 26).forEach((v, i) => {
+                const wrap = document.createElement('div'); wrap.className = 'freq-bar-wrap';
+                const bar  = document.createElement('div'); bar.className = 'freq-bar'; bar.style.height = Math.round((v / max) * 50) + 'px';
+                const lbl  = document.createElement('div'); lbl.className = 'freq-letter'; lbl.textContent = String.fromCharCode(65 + i);
+                wrap.appendChild(bar); wrap.appendChild(lbl); container.appendChild(wrap);
+            });
+        }
+        function updateAnalysis() {
+            const input  = document.getElementById('inputText').value;
+            const output = document.getElementById('outputText').value;
+            drawFreqBars('freqInput', getFreq(input));
+            const hexStr = output.replace(/\s/g, '');
+            if (/^[0-9a-fA-F]+$/.test(hexStr) && hexStr.length >= 2) {
+                const byteVals = [];
+                for (let i = 0; i < hexStr.length; i += 2) byteVals.push(parseInt(hexStr.substr(i, 2), 16));
+                const binned = Array(26).fill(0);
+                byteVals.forEach(b => { const idx = Math.min(25, Math.floor(b / 10)); binned[idx]++; });
+                drawFreqBars('freqOutput', binned);
+            } else drawFreqBars('freqOutput', Array(26).fill(0));
+
+            const sg = document.getElementById('statsGrid');
+            if (sg) sg.innerHTML = `
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">INPUT CHARS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--accent)">${input.length}</div></div>
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">BLOCK SIZE</div><div style="font-family:'Orbitron',monospace;font-size:16px;color:var(--pink)">128 bits</div></div>
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">KEY SIZE</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--purple)">${keySize} b</div></div>
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px">ROUNDS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--yellow)">${lastNr}</div></div>`;
+        }
+
+        /* ── PARTICLES ── */
+        (function spawnParticles() {
+            const container = document.getElementById('particles');
+            const colors = ['#B44FFF','#f06adf','#6ef5d0','#8beeff','#c084fc','#f9d97a'];
+            for (let i = 0; i < 28; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left     = Math.random() * 100 + 'vw';
+                p.style.animationDuration  = (8 + Math.random() * 14) + 's';
+                p.style.animationDelay     = (-Math.random() * 20)    + 's';
+                p.style.background         = colors[Math.floor(Math.random() * colors.length)];
+                p.style.opacity            = (0.3 + Math.random() * 0.5).toString();
+                container.appendChild(p);
+            }
+        })();
+
+        /* ── INIT ── */
+        initStateGrid();
+        updateKeyDisplay();
+        setStep(1);
+        updateAnalysis();
+        document.getElementById('stateRoundLabel').textContent = 'AWAITING INPUT';
+        (function initRoundSelector() {
+            const kb = getKeyBytes();
+            const nk = getNk();
+            const pb = textToBytes('', 16);
+            const { snapshots, nr } = aesEncryptBlock(pb, kb, nk);
+            buildRoundSelector(snapshots, nr, true);
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Caesar Cipher</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap');
+
+        :root {
+            --bg:           #06040f;
+            --bg2:          #080614;
+            --panel:        #0e0820;
+            --panel2:       #130c2a;
+            --border:       #241545;
+            --border2:      #3d2275;
+            --accent:       #00FFD4;
+            --accent2:      #00d4b0;
+            --accent3:      #009e85;
+            --accent-dim:   rgba(0, 255, 212, 0.10);
+            --accent-glow:  rgba(0, 255, 212, 0.28);
+            --text:         #f8f5ff;
+            --text-dim:     #ddd6f8;
+            --text-muted:   #b8aee0;
+            --pink:         #c084fc;
+            --teal:         #00FFD4;
+            --red:          #FF5F5F;
+            --blue:         #818cf8;
+            --purple:       #a855f7;
+            --purple2:      #e879f9;
+            --gold:         #f0abfc;
+            --lime:         #86efac;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 65% 50% at 5%  5%,  rgba(0,255,212,0.10) 0%, transparent 60%),
+                radial-gradient(ellipse 55% 55% at 95% 90%, rgba(168,85,247,0.14) 0%, transparent 60%),
+                radial-gradient(ellipse 45% 40% at 50% 50%, rgba(129,140,248,0.08) 0%, transparent 65%),
+                radial-gradient(ellipse 35% 45% at 80% 10%, rgba(232,121,249,0.08) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(168,85,247,.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,212,.015) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── PARTICLES ── */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            width: 2px; height: 2px;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+        @keyframes floatUp {
+            0%   { transform: translateY(100vh); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-20px) translateX(30px); opacity: 0; }
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 60px;
+            border-bottom: 1px solid rgba(168,85,247,0.20);
+            background: rgba(6,4,15,0.96);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(24px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 28px;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, #00FFD4, #818cf8, #e879f9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1;  box-shadow: 0 0 8px  var(--accent-glow); }
+            50%       { opacity: .5; box-shadow: 0 0 22px var(--accent-glow); }
+        }
+
+        .topbar-center {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            letter-spacing: 5px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar-center span { color: var(--accent2); font-size: 13px; }
+
+        .back-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            background: transparent;
+            border: 1.5px solid rgba(0,255,212,.3);
+            border-radius: 20px;
+            padding: 10px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            transition: all .3s;
+        }
+
+        .back-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 0 24px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            text-align: center;
+            padding: 48px 24px 36px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 7px;
+            color: var(--accent2);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        .hero-label::before,
+        .hero-label::after {
+            content: '';
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent2));
+        }
+
+        .hero-label::after { background: linear-gradient(90deg, var(--accent2), transparent); }
+
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(32px, 5vw, 58px);
+            font-weight: 900;
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, #00FFD4 0%, #818cf8 50%, #e879f9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .hero-sub {
+            font-size: 17px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+            padding: 0 60px 28px;
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 0;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-self: stretch;
+        }
+
+        /* ── PANEL ── */
+        .panel {
+            background: rgba(2,26,18,0.85);
+            border: 1px solid rgba(0,255,212,0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00FFD4, #818cf8, #e879f9);
+            opacity: 0.80;
+        }
+
+        .left-panel .panel { flex: 1; }
+        .left-panel .panel:first-child { flex: 1.4; }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(0,255,212,0.08);
+            background: rgba(1,15,10,0.5);
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .panel-title-dot.orange {
+            background: var(--gold);
+            box-shadow: 0 0 8px rgba(240,171,252,0.5);
+        }
+
+        .char-count {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 18px 22px;
+            resize: none;
+            flex: 1;
+            min-height: 130px;
+        }
+
+        #outputText { min-height: 171px; }
+
+        textarea::placeholder {
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        /* ── ACTION ROW ── */
+        .action-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            border-top: 1px solid rgba(0,255,212,0.08);
+            background: rgba(1,15,10,0.4);
+            flex-shrink: 0;
+        }
+
+        .mode-btns { display: flex; gap: 8px; }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border: 1.5px solid rgba(0,255,212,0.22);
+            background: transparent;
+            color: var(--text-dim);
+            transition: all .25s;
+        }
+
+        .mode-btn.active {
+            background: rgba(0,255,212,0.12);
+            border-color: rgba(0,255,212,0.55);
+            color: var(--accent);
+            box-shadow: 0 4px 18px rgba(0,255,212,.3), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .mode-btn:not(.active):hover {
+            color: var(--accent);
+            border-color: rgba(0,255,212,0.4);
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #009e85, #00d4b0, #00FFD4);
+            border: 1px solid rgba(0,255,212,0.5);
+            border-radius: 20px;
+            color: #021a13;
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 22px rgba(0,255,212,.35), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(135deg, #00d4b0, #00FFD4, #7dfff0);
+            box-shadow: 0 8px 38px rgba(0,255,212,.55), inset 0 1px 0 rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active { transform: translateY(0); }
+
+        /* ── OUTPUT HEADER ── */
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(0,255,212,0.08);
+            background: rgba(1,15,10,0.5);
+            flex-shrink: 0;
+        }
+
+        .copy-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--accent2);
+            background: rgba(0,255,212,0.08);
+            border: 1px solid rgba(0,255,212,0.22);
+            border-radius: 10px;
+            padding: 6px 16px;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(0,255,212,0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+
+        /* ── RIGHT: KEY PANEL ── */
+        .key-panel {
+            background: rgba(2,26,18,0.85);
+            border: 1px solid rgba(0,255,212,0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .key-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent), var(--blue));
+            opacity: 0.6;
+        }
+
+        .key-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(0,255,212,0.08);
+            background: rgba(1,15,10,0.5);
+        }
+
+        .key-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+        }
+
+        /* SHIFT CONTROL */
+        .shift-control {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .shift-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .shift-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+        }
+
+        /* EDITABLE SHIFT INPUT */
+        .shift-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .shift-value-input {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+            text-shadow: 0 0 16px var(--accent-glow);
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--accent3);
+            outline: none;
+            width: 52px;
+            text-align: center;
+            cursor: text;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .shift-value-input:focus {
+            border-bottom-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,255,212,0.2);
+        }
+
+        .shift-value-input::-webkit-inner-spin-button,
+        .shift-value-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+        .shift-edit-hint {
+            position: absolute;
+            right: -18px;
+            font-size: 9px;
+            color: var(--text-muted);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .shift-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--border2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .shift-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent3));
+            box-shadow: 0 0 10px var(--accent-glow);
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+
+        .shift-slider::-webkit-slider-thumb:hover {
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .rnd-btn {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            background: rgba(0,255,212,0.07);
+            border: 1px solid rgba(0,255,212,0.25);
+            border-radius: 10px;
+            color: var(--accent);
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .rnd-btn:hover {
+            color: #fff;
+            border-color: var(--accent);
+            background: rgba(0,255,212,0.14);
+        }
+
+        /* ── WHEEL ── */
+        .wheel-section {
+            padding: 14px 18px 18px;
+            border-top: 1px solid rgba(0,255,212,0.08);
+        }
+
+        .wheel-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .wheel-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas#wheel {
+            border-radius: 50%;
+            display: block;
+        }
+
+        /* ── STEPS BOTTOM ── */
+        .steps-section {
+            position: relative;
+            z-index: 1;
+            padding: 0 60px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tabs-panel {
+            background: rgba(2,26,18,0.85);
+            border: 1px solid rgba(0,255,212,0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            position: relative;
+        }
+
+        .tabs-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--pink));
+            opacity: 0.6;
+        }
+
+        .steps-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(0,255,212,0.1);
+            padding: 0 16px;
+            background: rgba(1,15,10,0.5);
+        }
+
+        .steps-tab {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 3px;
+            padding: 16px 24px;
+            color: var(--text-dim);
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all .2s;
+            margin-bottom: -1px;
+        }
+
+        .steps-tab .tab-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .steps-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .steps-tab.active .tab-dot { background: var(--accent); }
+
+        .steps-content { padding: 24px 28px 28px; }
+
+        .steps-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .step-num {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 2px solid var(--border2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: var(--bg2);
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-item.active .step-num {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .step-item.done .step-num {
+            border-color: var(--purple);
+            color: var(--purple);
+            background: rgba(168,85,247,0.1);
+        }
+
+        .step-lbl {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .step-item.active .step-lbl { color: var(--accent); }
+        .step-item.done  .step-lbl  { color: var(--purple); }
+
+        .step-connector {
+            width: 26px;
+            height: 2px;
+            background: var(--border2);
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .step-connector.done { background: var(--purple); }
+
+        .step-detail {
+            background: var(--bg2);
+            border: 1px solid rgba(0,255,212,0.12);
+            border-left: 3px solid var(--accent);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 16px;
+            font-size: 16px;
+            color: var(--text-dim);
+            line-height: 1.7;
+            min-height: 52px;
+        }
+
+        .step-detail span {
+            color: var(--accent);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* ANALYSIS */
+        .freq-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 56px;
+            margin-bottom: 6px;
+        }
+
+        .freq-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            gap: 2px;
+        }
+
+        .freq-bar {
+            width: 100%;
+            background: linear-gradient(180deg, var(--accent), var(--accent3));
+            border-radius: 1px;
+            min-height: 2px;
+            transition: height 0.4s ease;
+            opacity: 0.8;
+        }
+
+        .freq-letter {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* learn / analysis blocks */
+        .learn-block {
+            background: var(--bg2);
+            border: 1px solid rgba(0,255,212,0.10);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .learn-block h4 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .learn-block p {
+            font-size: 13px;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+
+        
+    </style>
+</head>
+
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-dot"></div>CRYPTOCORE
+        </div>
+        <button class="back-btn" onclick="history.back()">← BACK</button>
+    </div>
+
+    <div class="hero">
+        <div class="hero-title">CAESAR</div>
+        <div class="hero-sub">Encrypt &amp; decrypt with a fixed shift key (1-25)</div>
+    </div>
+
+    <div class="main">
+
+        <!-- LEFT -->
+        <div class="left-panel">
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot"></div> INPUT (PLAINTEXT)
+                    </div>
+                    <div class="char-count" id="inCount">0/1000</div>
+                </div>
+                <textarea id="inputText" placeholder="Type your secret message here..." maxlength="1000"
+                    oninput="updateCount();updateAnalysis()"></textarea>
+                <div class="action-row">
+                    <div class="mode-btns">
+                        <button class="mode-btn active" id="btnEncrypt" onclick="setMode('encrypt')">Encrypt</button>
+                        <button class="mode-btn" id="btnDecrypt" onclick="setMode('decrypt')">Decrypt</button>
+                    </div>
+                    <button class="action-btn" onclick="processText()">
+                        <span id="actionLabel">ENCRYPT</span> →
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="output-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot orange"></div> OUTPUT (CIPHERTEXT)
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div class="char-count" id="outCount">0/1000</div>
+                        <button class="copy-btn" onclick="copyOutput()">COPY</button>
+                    </div>
+                </div>
+                <textarea id="outputText" placeholder="Output appears here..." readonly></textarea>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="right-panel">
+
+            <div class="key-panel">
+                <div class="key-header">
+                    <div class="key-title">ACTIVE KEY</div>
+                </div>
+
+                <div class="shift-control">
+                    <div class="shift-label-row">
+                        <span class="shift-label">SHIFT VALUE</span>
+                        <div class="shift-input-wrap">
+                            <input type="number" class="shift-value-input" id="shiftInput" min="1" max="25" value="3"
+                                oninput="onShiftInputChange(this.value)" onblur="validateShiftInput()"
+                                onkeydown="if(event.key==='Enter')this.blur()" />
+                        </div>
+                    </div>
+                    <input type="range" class="shift-slider" id="shiftSlider" min="1" max="25" value="3"
+                        oninput="updateShift(this.value)" />
+                    <button class="rnd-btn" onclick="randomShift()">RANDOMIZE SHIFT</button>
+                </div>
+
+                <div class="wheel-section">
+                    <div class="wheel-title">CIPHER WHEEL</div>
+                    <div class="wheel-wrap">
+                        <canvas id="wheel" width="290" height="290"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="steps-section">
+        <div class="tabs-panel">
+            <div class="steps-tabs">
+                <button class="steps-tab active" id="tab-steps" onclick="switchTab('steps')">
+                    <div class="tab-dot"></div> STEPS
+                </button>
+                <button class="steps-tab" id="tab-learn" onclick="switchTab('learn')">
+                    <div class="tab-dot"></div> LEARN
+                </button>
+                <button class="steps-tab" id="tab-analysis" onclick="switchTab('analysis')">
+                    <div class="tab-dot"></div> ANALYSIS
+                </button>
+            </div>
+
+            <div class="steps-content">
+                <div id="pane-steps">
+                    <div class="steps-row">
+                        <div class="step-item active" id="s1" onclick="setStep(1)">
+                            <div class="step-num">1</div>
+                            <div class="step-lbl">Plaintext</div>
+                        </div>
+                        <div class="step-connector" id="con1"></div>
+                        <div class="step-item" id="s2" onclick="setStep(2)">
+                            <div class="step-num">2</div>
+                            <div class="step-lbl">Set Shift</div>
+                        </div>
+                        <div class="step-connector" id="con2"></div>
+                        <div class="step-item" id="s3" onclick="setStep(3)">
+                            <div class="step-num">3</div>
+                            <div class="step-lbl">Lookup</div>
+                        </div>
+                        <div class="step-connector" id="con3"></div>
+                        <div class="step-item" id="s4" onclick="setStep(4)">
+                            <div class="step-num">4</div>
+                            <div class="step-lbl">Replace</div>
+                        </div>
+                        <div class="step-connector" id="con4"></div>
+                        <div class="step-item" id="s5" onclick="setStep(5)">
+                            <div class="step-num">5</div>
+                            <div class="step-lbl">Wrap-around</div>
+                        </div>
+                        <div class="step-connector" id="con5"></div>
+                        <div class="step-item" id="s6" onclick="setStep(6)">
+                            <div class="step-num">6</div>
+                            <div class="step-lbl">Assemble</div>
+                        </div>
+                        <div class="step-connector" id="con6"></div>
+                        <div class="step-item" id="s7" onclick="setStep(7)">
+                            <div class="step-num">7</div>
+                            <div class="step-lbl">Ciphertext</div>
+                        </div>
+                    </div>
+                    <div class="step-detail" id="stepDetail"></div>
+                </div>
+
+                <div id="pane-learn" style="display:none;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <div class="learn-block">
+                            <h4 style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size: 16px;">WHAT IS CAESAR CIPHER</h4>
+                            <p style="font-size: 15px;">The Caesar cipher is one of the oldest encryption techniques, named after Julius Caesar who used it to protect military communications. It works by shifting each letter in the plaintext by a fixed number of positions in the alphabet.</p>
+                         <p style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size: 15px;"> Example:</p>
+        Plaintext: <span style="color:var(--accent);font-family:'Share Tech Mono',monospace;">HELLO</span><br>
+        Shift: <span style="color:var(--accent);font-family:'Share Tech Mono',monospace;">3</span><br>
+
+        Encrypt step-by-step:<br>
+        H -> K<br>
+        E -> H<br>
+        L -> O<br>
+        L -> O<br>
+        O -> R<br>
+
+        Ciphertext: <span style="color:var(--accent);font-family:'Share Tech Mono',monospace;">KHOOR</span><br>
+                        
+                        
+                        </div>
+                        <div class="learn-block">
+    <h4 style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size: 16px;">HOW IT WORKS</h4>
+    <p style="font-size: 15px;">
+        Each letter is shifted forward (encrypt) or backward (decrypt) by the chosen shift value in the Caesar Cipher
+        The algorithm works only on alphabetic characters while numbers spaces and symbols remain unchanged .
+        <br />
+        With shift (3) A -> D , B -> E , and Z -> C This shows how every letter moves a fixed number of steps in the alphabet .
+        <br />
+        The alphabet is treated like a circle so after Z it goes back to A This is called wrap around and is handled using modular arithmetic
+        It ensures that calculations like Z + 3 do not go outside the alphabet range but instead return valid letters within A-Z .
+        <br />
+        Because the same shift is applied to every letter the pattern remains consistent which is why Caesar Cipher is a simple substitution cipher but still useful for understanding basic encryption concepts .
+    </p>
+</div>
+                        <div class="learn-block" style="grid-column:1/-1;">
+    <h4 style="color:var(--accent);font-family:'Share Tech Mono',monospace;font-size: 16px;">FORMULA</h4>
+    <p style="font-size: 15px;">
+        Encrypt: <span style="color:var(--accent);font-family:'Share Tech Mono',monospace;">C = (P + shift) mod 26</span><br />
+        Decrypt: <span style="color:var(--accent);font-family:'Share Tech Mono',monospace;">P = (C - shift + 26) mod 26</span>
+        <br /><br />
+
+       
+
+    </p>
+</div>
+                    </div>
+                </div>
+
+                <div id="pane-analysis" style="display:none;">
+                    <div style="display:grid;grid-template-columns:1fr;gap:16px;">
+                        <div class="learn-block">
+                            <h4>OUTPUT FREQUENCY</h4>
+                            <div class="freq-row" id="freqOutput"></div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Letter distribution in ciphertext</div>
+                        </div>
+                        <div class="learn-block">
+                            <h4>STATS</h4>
+                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px;" id="statsGrid"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+  
+
+    <script>
+        function caesarEncrypt(text, shift) {
+            let r = "";
+            for (let i = 0; i < text.length; i++) {
+                let c = text[i], code = text.charCodeAt(i);
+                if (code >= 65 && code <= 90) c = String.fromCharCode(((code - 65 + shift) % 26) + 65);
+                else if (code >= 97 && code <= 122) c = String.fromCharCode(((code - 97 + shift) % 26) + 97);
+                r += c;
+            }
+            return r;
+        }
+        function caesarDecrypt(text, shift) { return caesarEncrypt(text, 26 - shift); }
+
+        let mode = 'encrypt', shift = 3, currentStep = 1;
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btnEncrypt').className = 'mode-btn' + (m === 'encrypt' ? ' active' : '');
+            document.getElementById('btnDecrypt').className = 'mode-btn' + (m === 'decrypt' ? ' active' : '');
+            document.getElementById('actionLabel').textContent = m === 'encrypt' ? 'ENCRYPT' : 'DECRYPT';
+            document.getElementById('statusMode').textContent = m === 'encrypt' ? 'CAESAR ACTIVE' : 'DECRYPT MODE';
+        }
+
+        function processText() {
+            const text = document.getElementById('inputText').value;
+            let result = mode === 'encrypt' ? caesarEncrypt(text, shift) : caesarDecrypt(text, shift);
+            document.getElementById('outputText').value = result;
+            document.getElementById('outCount').textContent = result.length + '/1000';
+            updateAnalysis();
+            for (let i = 1; i <= 7; i++) setStepState(i, i < 7 ? 'done' : 'active');
+            setStep(7);
+        }
+
+        function normalizeShift(v) {
+            let n = parseInt(v) || 1;
+            n = ((n % 26) + 26) % 26;
+            if (n === 0) n = 26;
+            return n;
+        }
+
+        function updateShift(v) {
+            shift = normalizeShift(v);
+            document.getElementById('shiftInput').value = shift;
+            document.getElementById('shiftSlider').value = Math.min(shift, 25);
+            drawWheel();
+        }
+
+        function onShiftInputChange(v) {
+            const n = parseInt(v);
+            if (!isNaN(n)) {
+                shift = normalizeShift(n);
+                document.getElementById('shiftSlider').value = Math.min(shift, 25);
+                drawWheel();
+            }
+        }
+
+        function validateShiftInput() {
+            const inp = document.getElementById('shiftInput');
+            shift = normalizeShift(inp.value);
+            inp.value = shift;
+            document.getElementById('shiftSlider').value = Math.min(shift, 25);
+            drawWheel();
+        }
+
+        function randomShift() { updateShift(Math.floor(Math.random() * 25) + 1); }
+        function updateCount() { document.getElementById('inCount').textContent = document.getElementById('inputText').value.length + '/1000'; }
+
+        function copyOutput() {
+            const text = document.getElementById('outputText').value;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                const n = document.getElementById('notif');
+                n.classList.add('show');
+                setTimeout(() => n.classList.remove('show'), 2000);
+            });
+        }
+
+        function drawWheel() {
+            const canvas = document.getElementById('wheel');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2;
+            // Bigger wheel radii to match new canvas size 290x290
+            const R_outer = 134, R_inner = 90, R_center = 46;
+            ctx.clearRect(0, 0, W, H);
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const n = 26, slice = (2 * Math.PI) / n;
+
+            // Outer ring (plain)
+            for (let i = 0; i < n; i++) {
+                const angle = i * slice - Math.PI / 2, nextAngle = angle + slice, mid = angle + slice / 2;
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R_outer, angle, nextAngle); ctx.closePath();
+                ctx.fillStyle = i % 2 === 0 ? 'rgba(14,8,32,0.97)' : 'rgba(19,12,42,0.97)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(36,21,69,0.8)'; ctx.lineWidth = 0.5; ctx.stroke();
+                ctx.save();
+                ctx.translate(cx + Math.cos(mid) * (R_outer - 16), cy + Math.sin(mid) * (R_outer - 16));
+                ctx.rotate(mid + Math.PI / 2);
+                ctx.font = "bold 12px 'Share Tech Mono',monospace";
+                ctx.fillStyle = '#8b7ec8'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(letters[i], 0, 0); ctx.restore();
+            }
+
+            // Inner ring (cipher)
+            for (let i = 0; i < n; i++) {
+                const angle = i * slice - Math.PI / 2, nextAngle = angle + slice, mid = angle + slice / 2;
+                const cipherIdx = (i + shift) % n, isHL = i === 0;
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R_inner, angle, nextAngle); ctx.closePath();
+                ctx.fillStyle = isHL ? 'rgba(0,255,212,0.18)' : (i % 2 === 0 ? 'rgba(6,4,15,0.97)' : 'rgba(8,6,20,0.97)');
+                ctx.fill(); ctx.strokeStyle = 'rgba(36,21,69,0.8)'; ctx.lineWidth = 0.5; ctx.stroke();
+                ctx.save();
+                ctx.translate(cx + Math.cos(mid) * (R_inner - 13), cy + Math.sin(mid) * (R_inner - 13));
+                ctx.rotate(mid + Math.PI / 2);
+                ctx.font = "bold 12px 'Share Tech Mono',monospace";
+                ctx.fillStyle = isHL ? '#00FFD4' : '#00d4b0'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(letters[cipherIdx], 0, 0); ctx.restore();
+            }
+
+            // Ring borders
+            ctx.beginPath(); ctx.arc(cx, cy, R_outer, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(61,34,117,0.8)'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx, cy, R_inner, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(0,255,212,0.25)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+            // Center circle
+            ctx.beginPath(); ctx.arc(cx, cy, R_center, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(14,8,32,0.97)'; ctx.fill();
+            ctx.strokeStyle = 'rgba(0,255,212,0.3)'; ctx.lineWidth = 2; ctx.stroke();
+
+            ctx.font = "bold 10px 'Orbitron',monospace"; ctx.fillStyle = '#00d4b0'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('Shift', cx, cy - 10);
+            ctx.font = "bold 22px 'Orbitron',monospace"; ctx.fillStyle = '#00FFD4';
+            ctx.shadowColor = 'rgba(0,255,212,0.7)'; ctx.shadowBlur = 14;
+            ctx.fillText(shift, cx, cy + 12); ctx.shadowBlur = 0;
+
+            ctx.font = "8px 'Share Tech Mono',monospace"; ctx.fillStyle = '#8b7ec8'; ctx.textAlign = 'center';
+            ctx.fillText('PLAIN', cx, cy - R_outer - 6); ctx.fillText('CIPHER', cx, cy - R_inner - 6);
+
+            // Arrow pointer
+            ctx.beginPath(); ctx.moveTo(cx, cy - R_outer + 5); ctx.lineTo(cx - 5, cy - R_outer - 8); ctx.lineTo(cx + 5, cy - R_outer - 8); ctx.closePath();
+            ctx.fillStyle = '#00FFD4'; ctx.shadowColor = 'rgba(0,255,212,0.9)'; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
+        }
+
+        const stepTexts = ['',
+          '<span>STEP 1 — PLAINTEXT:</span> Enter the message you want to encrypt The plaintext is the original readable text before encryption begins Each alphabetic character will be processed separately according to the Caesar Cipher rules while spaces punctuation marks and numbers remain unchanged to preserve the structure of the message.',
+
+'<span>STEP 2 — SET SHIFT:</span> Choose a shift key between 1 and 25 This value acts as the secret encryption key and determines how many positions each letter moves in the alphabet You can click the shift number to type it manually or drag the slider for easier adjustment.',
+
+'<span>STEP 3 — LOOKUP:</span> For every letter in the plaintext the algorithm searches for its position in the alphabet sequence (A=0, B=1, … Z=25) Determining this position is important because the encryption process depends on shifting the numerical position of each letter.',
+
+'<span>STEP 4 — REPLACE:</span> Apply the formula <span>C = (P + shift) mod 26</span> The plaintext letter is replaced with another letter located at the shifted position in the alphabet This substitution process transforms normal readable text into encrypted characters.',
+
+'<span>STEP 5 — WRAP AROUND:</span> If shifting reaches the end of the alphabet the process automatically continues again from the beginning For example with shift(3) X→A , Y→B , Z→C This wrap around mechanism uses modular arithmetic (mod 26) to keep all letters within the valid alphabet range.',
+
+'<span>STEP 6 — ASSEMBLE:</span> After encrypting each letter individually all encrypted characters are assembled together in the original order to produce the complete encrypted message  The algorithm preserves letter case meaning uppercase letters stay uppercase and lowercase letters stay lowercase.',
+
+'<span>STEP 7 — CIPHERTEXT:</span> The final encrypted output is called ciphertext Unlike plaintext ciphertext is difficult to understand without knowing the correct shift key used during encryption You can copy the encrypted result using the COPY button or switch to Decrypt mode to restore the original message using the same shift value.'
+        ];
+
+        function setStepState(i, state) {
+            const el = document.getElementById('s' + i);
+            if (!el) return;
+            el.className = 'step-item ' + state;
+            if (i < 7) { const con = document.getElementById('con' + i); if (con) con.className = 'step-connector' + (state === 'done' ? ' done' : ''); }
+        }
+
+        function setStep(n) {
+            for (let i = 1; i <= 7; i++) {
+                if (i < n) setStepState(i, 'done');
+                else if (i === n) setStepState(i, 'active');
+                else setStepState(i, '');
+            }
+            document.getElementById('stepDetail').innerHTML = stepTexts[n];
+        }
+
+        function switchTab(tab) {
+            ['steps', 'learn', 'analysis'].forEach(t => {
+                document.getElementById('tab-' + t).className = 'steps-tab' + (t === tab ? ' active' : '');
+                document.getElementById('pane-' + t).style.display = t === tab ? 'block' : 'none';
+            });
+            if (tab === 'analysis') updateAnalysis();
+        }
+
+        function getFreq(text) {
+            const freq = Array(26).fill(0);
+            for (const c of text.toUpperCase()) { const code = c.charCodeAt(0) - 65; if (code >= 0 && code < 26) freq[code]++; }
+            return freq;
+        }
+
+        function drawFreqBars(id, text) {
+            const container = document.getElementById(id);
+            if (!container) return;
+            container.innerHTML = '';
+            const freq = getFreq(text);
+            const max = Math.max(...freq, 1);
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach((l, i) => {
+                const wrap = document.createElement('div'); wrap.className = 'freq-bar-wrap';
+                const bar = document.createElement('div'); bar.className = 'freq-bar';
+                bar.style.height = Math.round((freq[i] / max) * 50) + 'px';
+                const lbl = document.createElement('div'); lbl.className = 'freq-letter'; lbl.textContent = l;
+                wrap.appendChild(bar); wrap.appendChild(lbl); container.appendChild(wrap);
+            });
+        }
+
+        function updateAnalysis() {
+            const output = document.getElementById('outputText').value;
+            const input = document.getElementById('inputText').value;
+            drawFreqBars('freqOutput', output);
+            const letters = input.replace(/[^a-zA-Z]/g, '');
+            const words = input.trim() ? input.trim().split(/\s+/).length : 0;
+            const unique = new Set(letters.toUpperCase()).size;
+            const sg = document.getElementById('statsGrid');
+            if (sg) {
+                sg.innerHTML = `
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">CHARS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--accent);">${input.length}</div></div>
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">LETTERS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--gold);">${letters.length}</div></div>
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">WORDS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--lime);">${words}</div></div>
+    <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">UNIQUE</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--blue);">${unique}</div></div>`;
+            }
+        }
+
+        // ── PARTICLES ──
+        const pContainer = document.getElementById('particles');
+        for (let i = 0; i < 25; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDuration = (8 + Math.random() * 12) + 's';
+            p.style.animationDelay = (Math.random() * 15) + 's';
+            p.style.background = ['#00FFD4','#a855f7','#818cf8','#e879f9','#86efac'][Math.floor(Math.random() * 5)];
+            pContainer.appendChild(p);
+        }
+
+        // Init
+        drawWheel();
+        setStep(1);
+        updateAnalysis();
+
+        // Load DH key if coming from DH page
+        const dhKey = sessionStorage.getItem('dhKey');
+        if (dhKey) {
+            sessionStorage.removeItem('dhKey');
+            const rawKey = parseInt(dhKey);
+            updateShift(rawKey);
+            const finalShift = (((rawKey % 26) + 26) % 26) || 26;
+            // Badge under key header
+            const badge = document.createElement('div');
+            badge.style.cssText = 'font-family:Share Tech Mono,monospace;font-size:10px;letter-spacing:2px;color:#06040f;background:linear-gradient(90deg,#00FFD4,#39FF6A);padding:4px 12px;border-radius:20px;margin:6px 14px 0;text-align:center;box-shadow:0 0 14px rgba(0,255,212,0.4);';
+            badge.textContent = 'DH KEY: ' + rawKey + '  ->  SHIFT: ' + finalShift;
+            document.querySelector('.key-header').insertAdjacentElement('afterend', badge);
+            // Notif popup
+            setTimeout(() => {
+                const n = document.getElementById('notif');
+                const orig = n.textContent;
+                n.textContent = 'DH KEY APPLIED \u2713';
+                n.classList.add('show');
+                setTimeout(() => { n.classList.remove('show'); setTimeout(() => { n.textContent = 'COPIED!'; }, 300); }, 2500);
+            }, 400);
+        }
+    </script>
+</body>
+
+</html>

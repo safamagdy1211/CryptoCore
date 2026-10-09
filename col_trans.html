@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Columnar Transposition Cipher</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap');
+
+        :root {
+            --bg: #020e06;
+            --bg2: #031009;
+            --panel: #04180b;
+            --panel2: #05200d;
+            --border: #053d18;
+            --border2: #0a6030;
+            --accent: #27AE60;
+            --accent2: #219a52;
+            --accent3: #1a7a40;
+            --accent-dim: rgba(39, 174, 96, 0.10);
+            --accent-glow: rgba(39, 174, 96, 0.22);
+            --text: #c8ecd8;
+            --text-dim: #4aab72;
+            --text-muted: #1a6b3a;
+            --pink: #FF6B9D;
+            --teal: #00FFD1;
+            --red: #FF5F5F;
+            --blue: #7DF9FF;
+            --purple: #BF5FFF;
+            --purple2: #A020FF;
+            --cyan: #27AE60;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 10% 5%, rgba(39, 174, 96, 0.09) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 70% at 90% 85%, rgba(0, 255, 209, 0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(255, 107, 157, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── GRID OVERLAY */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(39, 174, 96, .022) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(39, 174, 96, .022) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 60px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.15);
+            background: rgba(1, 15, 5, 0.95);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(24px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 28px;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--purple2), var(--teal), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 8px var(--accent-glow);
+            }
+
+            50% {
+                opacity: .5;
+                box-shadow: 0 0 22px var(--accent-glow);
+            }
+        }
+
+        .topbar-center {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            letter-spacing: 5px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar-center span {
+            color: var(--pink);
+            font-size: 13px;
+        }
+
+        .back-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            background: transparent;
+            border: 1.5px solid rgba(39, 174, 96, .3);
+            border-radius: 20px;
+            padding: 10px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            transition: all .3s;
+        }
+
+        .back-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 0 24px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            text-align: center;
+            padding: 48px 24px 36px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 7px;
+            color: var(--pink);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        .hero-label::before,
+        .hero-label::after {
+            content: '';
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--pink));
+        }
+
+        .hero-label::after {
+            background: linear-gradient(90deg, var(--pink), transparent);
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(32px, 5vw, 58px);
+            font-weight: 900;
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 55%, var(--pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .hero-sub {
+            font-size: 17px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+            padding: 0 60px 28px;
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 0;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-self: stretch;
+        }
+
+        /* ── PANEL ── */
+        .panel {
+            background: rgba(2, 26, 10, 0.85);
+            border: 1px solid rgba(39, 174, 96, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--pink));
+            opacity: 0.7;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.08);
+            background: rgba(1, 15, 5, 0.5);
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .panel-title-dot.pink {
+            background: var(--pink);
+            box-shadow: 0 0 8px rgba(244, 114, 182, .5);
+        }
+
+        .char-count {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 18px 22px;
+            resize: none;
+            flex: 1;
+            min-height: 80px;
+        }
+
+        textarea::placeholder {
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        /* ── ACTION ROW ── */
+        .action-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            border-top: 1px solid rgba(39, 174, 96, 0.08);
+            background: rgba(1, 15, 5, 0.4);
+            flex-shrink: 0;
+        }
+
+        .mode-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border: 1.5px solid rgba(39, 174, 96, 0.22);
+            background: transparent;
+            color: var(--text-dim);
+            transition: all .25s;
+        }
+
+        .mode-btn.active {
+            background: rgba(39, 174, 96, 0.12);
+            border-color: rgba(39, 174, 96, 0.55);
+            color: var(--accent);
+            box-shadow: 0 4px 18px rgba(46, 204, 113, .4), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .mode-btn:not(.active):hover {
+            color: var(--accent);
+            border-color: rgba(39, 174, 96, 0.4);
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #1a7a40, #27AE60, #2ecc71);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            border-radius: 20px;
+            color: #021a0a;
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 22px rgba(46, 204, 113, .45), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(135deg, #27AE60, #2ecc71, #58d68d);
+            box-shadow: 0 8px 38px rgba(46, 204, 113, .65), inset 0 1px 0 rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active { transform: translateY(0); }
+
+        /* ── OUTPUT ── */
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.08);
+            background: rgba(1, 15, 5, 0.5);
+            flex-shrink: 0;
+        }
+
+        .copy-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--accent2);
+            background: rgba(39, 174, 96, 0.08);
+            border: 1px solid rgba(39, 174, 96, 0.22);
+            border-radius: 10px;
+            padding: 6px 16px;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(79, 195, 255, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 22px;
+            border-top: 1px solid rgba(39, 174, 96, 0.08);
+            flex-shrink: 0;
+            background: rgba(1, 15, 5, 0.4);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+            animation: pulse 2s infinite;
+        }
+
+        .status-text { color: var(--text-dim); }
+        .status-mode { color: var(--accent); }
+
+        /* ── KEY PANEL ── */
+        .key-panel {
+            background: rgba(2, 26, 10, 0.85);
+            border: 1px solid rgba(39, 174, 96, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .key-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--pink), var(--accent), var(--teal));
+            opacity: 0.6;
+        }
+
+        .key-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 22px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.08);
+            background: rgba(1, 15, 5, 0.5);
+        }
+
+        .key-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--accent);
+        }
+
+        .shift-control {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .key-block {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .key-block-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            background: rgba(79, 195, 255, 0.1);
+            color: var(--accent);
+        }
+
+        /* keyword input */
+        .key-word-wrap {
+            position: relative;
+        }
+
+        .key-word {
+            width: 100%;
+            background: rgba(1, 15, 5, 0.6);
+            border: 1px solid rgba(39, 174, 96, 0.25);
+            border-radius: 10px;
+            outline: none;
+            color: var(--accent);
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            padding: 10px 12px;
+            text-align: center;
+            text-transform: uppercase;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .key-word:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(39, 174, 96, 0.25);
+        }
+
+        .key-word::placeholder {
+            color: var(--text-muted);
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        .left-panel .panel {
+            flex: 1;
+        }
+
+        /* order preview strip */
+        .order-strip {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .order-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(79, 195, 255, 0.2);
+            background: rgba(1, 15, 5, 0.6);
+            min-width: 30px;
+        }
+
+        .order-cell .oc-letter {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .order-cell .oc-num {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: var(--text-muted);
+            line-height: 1;
+            margin-top: 2px;
+        }
+
+        .rnd-btn {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            background: rgba(244, 114, 182, 0.07);
+            border: 1px solid rgba(244, 114, 182, 0.25);
+            border-radius: 10px;
+            color: var(--pink);
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .rnd-btn:hover {
+            color: #fff;
+            border-color: var(--pink);
+            background: rgba(244, 114, 182, 0.14);
+        }
+
+        /* ── GRID VISUALIZER ── */
+        .grid-panel {
+            background: rgba(2, 26, 10, 0.85);
+            border: 1px solid rgba(39, 174, 96, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(16px);
+            padding: 18px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .grid-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--teal), var(--accent));
+            opacity: 0.5;
+        }
+
+        .grid-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .col-table {
+            width: 100%;
+            height: 100%;
+            border-collapse: separate;
+            border-spacing: 4px;
+            table-layout: fixed;
+        }
+
+        .col-table th {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            padding: 10px 4px;
+            text-align: center;
+            border-radius: 8px;
+            background: rgba(39, 174, 96, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(39, 174, 96, 0.25);
+            position: relative;
+        }
+
+        .col-table th .col-order {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .col-table td {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 0;
+            height: 42px;
+            text-align: center;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            transition: all .15s;
+        }
+
+        .col-table td.filled {
+            border-color: rgba(39, 174, 96, 0.15);
+        }
+
+        .col-table td.pad {
+            color: var(--text-muted);
+            border-color: rgba(39, 174, 96, 0.08);
+            background: rgba(1, 15, 5, 0.5);
+            font-weight: 400;
+        }
+
+        /* column highlight colors */
+        .col-0 { background: rgba(39, 174, 96,0.15); color: #27AE60 !important; border-color: rgba(39, 174, 96,0.3) !important; }
+        .col-1 { background: rgba(255,107,157,0.15); color: #FF6B9D !important; border-color: rgba(255,107,157,0.3) !important; }
+        .col-2 { background: rgba(0,255,209,0.15); color: #00FFD1 !important; border-color: rgba(0,255,209,0.3) !important; }
+        .col-3 { background: rgba(191,95,255,0.15); color: #BF5FFF !important; border-color: rgba(191,95,255,0.3) !important; }
+        .col-4 { background: rgba(255,215,0,0.15); color: #FFD700 !important; border-color: rgba(255,215,0,0.3) !important; }
+        .col-5 { background: rgba(255,95,95,0.15); color: #FF5F5F !important; border-color: rgba(255,95,95,0.3) !important; }
+        .col-6 { background: rgba(125,249,255,0.15); color: #7DF9FF !important; border-color: rgba(125,249,255,0.3) !important; }
+        .col-7 { background: rgba(160,32,255,0.15); color: #A020FF !important; border-color: rgba(160,32,255,0.3) !important; }
+        .col-8 { background: rgba(152,255,152,0.15); color: #98FF98 !important; border-color: rgba(152,255,152,0.3) !important; }
+        .col-9 { background: rgba(125,249,255,0.15); color: #7DF9FF !important; border-color: rgba(125,249,255,0.3) !important; }
+
+        .th-col-0 { background: rgba(39, 174, 96,0.20) !important; color: #27AE60 !important; border-color: rgba(39, 174, 96,0.4) !important; }
+        .th-col-1 { background: rgba(255,107,157,0.20) !important; color: #FF6B9D !important; border-color: rgba(255,107,157,0.4) !important; }
+        .th-col-2 { background: rgba(0,255,209,0.20) !important; color: #00FFD1 !important; border-color: rgba(0,255,209,0.4) !important; }
+        .th-col-3 { background: rgba(191,95,255,0.20) !important; color: #BF5FFF !important; border-color: rgba(191,95,255,0.4) !important; }
+        .th-col-4 { background: rgba(255,215,0,0.20) !important; color: #FFD700 !important; border-color: rgba(255,215,0,0.4) !important; }
+        .th-col-5 { background: rgba(255,95,95,0.20) !important; color: #FF5F5F !important; border-color: rgba(255,95,95,0.4) !important; }
+        .th-col-6 { background: rgba(125,249,255,0.20) !important; color: #7DF9FF !important; border-color: rgba(125,249,255,0.4) !important; }
+        .th-col-7 { background: rgba(160,32,255,0.20) !important; color: #A020FF !important; border-color: rgba(160,32,255,0.4) !important; }
+        .th-col-8 { background: rgba(152,255,152,0.20) !important; color: #98FF98 !important; border-color: rgba(152,255,152,0.4) !important; }
+        .th-col-9 { background: rgba(125,249,255,0.20) !important; color: #7DF9FF !important; border-color: rgba(125,249,255,0.4) !important; }
+
+        /* ── STEPS BOTTOM ── */
+        .steps-section {
+            position: relative;
+            z-index: 1;
+            padding: 0 60px 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .tabs-panel {
+            background: rgba(2, 26, 10, 0.85);
+            border: 1px solid rgba(39, 174, 96, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(16px);
+            position: relative;
+        }
+
+        .tabs-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--purple), var(--pink));
+            opacity: 0.6;
+        }
+
+        .steps-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(79, 195, 255, 0.1);
+            padding: 0 16px;
+            background: rgba(1, 15, 5, 0.5);
+        }
+
+        .steps-tab {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 3px;
+            padding: 16px 24px;
+            color: var(--text-dim);
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all .2s;
+            margin-bottom: -1px;
+        }
+
+        .steps-tab .tab-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .steps-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .steps-tab.active .tab-dot {
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        .steps-content { padding: 28px; }
+
+        .steps-row {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .step-num {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px solid rgba(79, 195, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(1, 15, 5, 0.7);
+            transition: all .3s;
+        }
+
+        .step-item.active .step-num {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            box-shadow: 0 0 18px var(--accent-glow);
+        }
+
+        .step-item.done .step-num {
+            border-color: var(--pink);
+            color: var(--pink);
+            background: rgba(244, 114, 182, .10);
+        }
+
+        .step-lbl {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-top: 6px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .step-item.active .step-lbl { color: var(--accent); }
+        .step-item.done .step-lbl   { color: var(--pink); }
+
+        .step-connector {
+            width: 28px;
+            height: 2px;
+            background: rgba(79, 195, 255, 0.2);
+            margin-bottom: 22px;
+            flex-shrink: 0;
+        }
+
+        .step-connector.done { background: var(--pink); }
+
+        .step-detail {
+            background: rgba(1, 15, 5, 0.6);
+            border: 1px solid rgba(39, 174, 96, 0.12);
+            border-left: 3px solid var(--accent);
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.8;
+            min-height: 80px;
+        }
+
+        .step-detail span {
+            color: var(--accent);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .formula-box {
+            margin-top: 12px;
+            padding: 12px 18px;
+            background: rgba(1, 15, 5, 0.7);
+            border: 1px solid rgba(39, 174, 96, 0.15);
+            border-radius: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--accent);
+            letter-spacing: 1px;
+            line-height: 2.2;
+        }
+
+        /* ── LEARN ── */
+        .learn-content {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .learn-content.active {
+            display: grid;
+        }
+
+        .learn-block {
+            background: rgba(1, 15, 5, 0.6);
+            border: 1px solid rgba(39, 174, 96, 0.12);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .learn-block h4 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .learn-block p {
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        .mono {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--accent);
+        }
+
+        /* ── ANALYSIS ── */
+        .freq-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 56px;
+            margin-bottom: 6px;
+        }
+
+        .freq-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            gap: 2px;
+        }
+
+        .freq-bar {
+            width: 100%;
+            background: linear-gradient(180deg, var(--accent), var(--accent3));
+            border-radius: 1px;
+            min-height: 2px;
+            transition: height .4s ease;
+            opacity: .8;
+        }
+
+        .freq-letter {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 7px;
+            color: var(--text-muted);
+        }
+
+        /* ── PARTICLES ── */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px; height: 2px;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0%   { transform: translateY(100vh); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-20px) translateX(30px); opacity: 0; }
+        }
+
+        @media (max-width: 900px) {
+            .main { grid-template-columns: 1fr; padding: 0 24px 24px; }
+            .right-panel { order: -1; }
+            .steps-section { padding: 0 24px 30px; }
+            .topbar { padding: 16px 24px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="particles" id="particles"></div>
+
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-dot"></div>CRYPTOCORE
+        </div>
+        <button class="back-btn" onclick="history.back()">← BACK</button>
+    </div>
+
+    <div class="hero">
+        <div class="hero-title">COLUMNAR</div>
+        <div class="hero-sub">Encrypt &amp; decrypt by rearranging columns according to a keyword</div>
+    </div>
+
+    <div class="main">
+
+        <!-- LEFT -->
+        <div class="left-panel">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot"></div> INPUT (PLAINTEXT)
+                    </div>
+                    <div class="char-count" id="inCount">0/1000</div>
+                </div>
+                <textarea id="inputText" placeholder="Type your secret message here..." maxlength="1000"
+                    oninput="updateCount();updateAnalysis();buildGridViz()"></textarea>
+                <div class="action-row">
+                    <div class="mode-btns">
+                        <button class="mode-btn active" id="btnEncrypt" onclick="setMode('encrypt')">Encrypt</button>
+                        <button class="mode-btn" id="btnDecrypt" onclick="setMode('decrypt')">Decrypt</button>
+                    </div>
+                    <button class="action-btn" onclick="processText()">
+                        <span id="actionLabel">ENCRYPT</span> →
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="output-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot pink"></div> OUTPUT (CIPHERTEXT)
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div class="char-count" id="outCount">0/1000</div>
+                        <button class="copy-btn" onclick="copyOutput()">COPY</button>
+                    </div>
+                </div>
+                <textarea id="outputText" placeholder="Output appears here..." readonly></textarea>
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="right-panel">
+
+            <div class="key-panel">
+                <div class="key-header">
+                    <div class="key-title">ACTIVE KEY</div>
+                    <button class="rnd-btn" style="width:auto;padding:4px 12px;" onclick="randomKey()">RANDOM</button>
+                </div>
+
+                <div class="shift-control">
+
+                    <div class="key-block">
+                        <div class="key-block-label">
+                            KEYWORD
+                            <span class="badge" id="kwBadge">2–10 LETTERS</span>
+                        </div>
+                        <div class="key-word-wrap">
+                            <input type="text" class="key-word" id="keyWord" maxlength="10" placeholder="KEYWORD"
+                                oninput="onKeyChange()" value="CRYPTO" />
+                        </div>
+                        <div class="key-hint">letters only · determines column order</div>
+                    </div>
+
+                    <div class="key-block">
+                        <div class="key-block-label">COLUMN ORDER PREVIEW</div>
+                        <div class="order-strip" id="orderStrip"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="grid-panel">
+                <div class="grid-title">GRID LAYOUT PREVIEW</div>
+                <div style="overflow:auto;flex:1;display:flex;flex-direction:column;">
+                    <table class="col-table" id="colTable" style="flex:1;"></table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BOTTOM TABS -->
+    <div class="steps-section">
+        <div class="tabs-panel">
+        <div class="steps-tabs">
+            <button class="steps-tab active" id="tab-steps" onclick="switchTab('steps')">
+                <div class="tab-dot"></div> STEPS
+            </button>
+            <button class="steps-tab" id="tab-learn" onclick="switchTab('learn')">
+                <div class="tab-dot"></div> LEARN
+            </button>
+            <button class="steps-tab" id="tab-analysis" onclick="switchTab('analysis')">
+                <div class="tab-dot"></div> ANALYSIS
+            </button>
+        </div>
+
+        <div class="steps-content">
+
+            <!-- STEPS -->
+            <div id="pane-steps">
+                <div class="steps-row">
+                    <div class="step-item active" id="s1" onclick="setStep(1)">
+                        <div class="step-num">1</div>
+                        <div class="step-lbl">Plaintext</div>
+                    </div>
+                    <div class="step-connector" id="con1"></div>
+                    <div class="step-item" id="s2" onclick="setStep(2)">
+                        <div class="step-num">2</div>
+                        <div class="step-lbl">Keyword</div>
+                    </div>
+                    <div class="step-connector" id="con2"></div>
+                    <div class="step-item" id="s3" onclick="setStep(3)">
+                        <div class="step-num">3</div>
+                        <div class="step-lbl">Fill Grid</div>
+                    </div>
+                    <div class="step-connector" id="con3"></div>
+                    <div class="step-item" id="s4" onclick="setStep(4)">
+                        <div class="step-num">4</div>
+                        <div class="step-lbl">Sort Cols</div>
+                    </div>
+                    <div class="step-connector" id="con4"></div>
+                    <div class="step-item" id="s5" onclick="setStep(5)">
+                        <div class="step-num">5</div>
+                        <div class="step-lbl">Read Down</div>
+                    </div>
+                    <div class="step-connector" id="con5"></div>
+                    <div class="step-item" id="s6" onclick="setStep(6)">
+                        <div class="step-num">6</div>
+                        <div class="step-lbl">Ciphertext</div>
+                    </div>
+                </div>
+                <div class="step-detail" id="stepDetail"></div>
+            </div>
+
+            <!-- LEARN -->
+            <div id="pane-learn" style="display:none;">
+                <div class="learn-content active">
+                    <div class="learn-block">
+                        <h4>WHAT IS COLUMNAR TRANSPOSITION?</h4>
+                        <p>Columnar Transposition is a classical cipher that rearranges the plaintext by writing it
+                            row-by-row into a grid, then reading out the columns in the order dictated by a keyword. No
+                            letters are changed — only their positions.</p>
+                    </div>
+                    <div class="learn-block">
+                        <h4>HOW IT WORKS</h4>
+                        <p>Write the message across rows, each row as wide as the keyword. Number the columns by the
+                            alphabetical rank of each keyword letter. Read each column top-to-bottom in that ranked
+                            order to form the ciphertext.</p>
+                        <div class="formula-box">
+                            cols = length of keyword<br>
+                            rows = ⌈message_length / cols⌉<br>
+                            pad = rows × cols − msg_len<br>
+                            order = argsort(keyword letters)
+                        </div>
+                    </div>
+                    <div class="learn-block">
+                        <h4>EXAMPLE — KEY: "CAB"</h4>
+                        <p>For <strong class="mono">HELLOWORLD</strong> with key <strong class="mono">CAB</strong>:</p>
+                        <div class="formula-box">
+                            Keyword: C A B<br>
+                            Order: 2 0 1<br>
+                            ─────────────────<br>
+                            Row 0: H E L<br>
+                            Row 1: L O W<br>
+                            Row 2: O R L<br>
+                            Row 3: D X X ← padded<br>
+                            ─────────────────<br>
+                            Col A(0): E O R X<br>
+                            Col B(1): L W L X<br>
+                            Col C(2): H L O D<br>
+                            Result: EORX LWLX HLOD
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- ANALYSIS -->
+            <div id="pane-analysis" style="display:none;">
+                <div style="display:grid;grid-template-columns:1fr;gap:16px;">
+                    <div class="learn-block">
+                        <h4>OUTPUT FREQUENCY</h4>
+                        <div class="freq-row" id="freqOutput"></div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Same distribution —
+                            transposition only</div>
+                    </div>
+                    <div class="learn-block" style="grid-column:1/-1;">
+                        <h4>STATS</h4>
+                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px;"
+                            id="statsGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end tabs-panel -->
+    </div><!-- end steps-section -->
+
+    <div class="notif" id="notif">✓ COPIED TO CLIPBOARD</div>
+
+    <script>
+        let mode = 'encrypt';
+        let keyword = 'CRYPTO';
+
+        const WORDS = ['CRYPTO', 'SECRET', 'CIPHER', 'MATRIX', 'PYTHON', 'ENIGMA', 'SHADOW', 'FALCON', 'DRAGON', 'VECTOR', 'ZEBRA', 'MAGIC'];
+
+        /* ── KEYWORD UTILITIES ── */
+        function getOrder(kw) {
+            // returns column read order (sorted index)
+            const letters = kw.toUpperCase().split('');
+            return letters
+                .map((l, i) => ({ l, i }))
+                .sort((a, b) => a.l < b.l ? -1 : a.l > b.l ? 1 : a.i - b.i)
+                .map(x => x.i);
+        }
+
+        function pad(text, cols) {
+            const rem = text.length % cols;
+            return rem === 0 ? text : text + 'X'.repeat(cols - rem);
+        }
+
+        /* ── CIPHER ── */
+        function columnarEncrypt(text, kw) {
+            const cols = kw.length;
+            if (cols < 2) return text;
+            const padded = pad(text, cols);
+            const rows = Math.ceil(padded.length / cols);
+            const order = getOrder(kw);
+            // build grid
+            const grid = [];
+            for (let r = 0; r < rows; r++) {
+                grid.push(padded.slice(r * cols, r * cols + cols).split(''));
+            }
+            // read columns in order
+            let result = '';
+            for (const col of order) {
+                for (let r = 0; r < rows; r++) result += grid[r][col] || 'X';
+            }
+            return result;
+        }
+
+        function columnarDecrypt(text, kw) {
+            const cols = kw.length;
+            if (cols < 2) return text;
+            const rows = Math.ceil(text.length / cols);
+            const order = getOrder(kw);
+            // figure out how many full vs short columns (when padded unevenly)
+            const totalCells = rows * cols;
+            const extra = totalCells - text.length; // 0 if evenly padded
+            // split text back into columns (in read order)
+            const colLengths = Array(cols).fill(rows);
+            // last `extra` columns in the order might be shorter if not perfectly padded
+            for (let i = 0; i < extra; i++) {
+                colLengths[order[cols - 1 - i]]--;
+            }
+            const columns = {};
+            let idx = 0;
+            for (const col of order) {
+                columns[col] = text.slice(idx, idx + colLengths[col]).split('');
+                idx += colLengths[col];
+            }
+            // rebuild row by row
+            const ptrs = {};
+            for (let c = 0; c < cols; c++) ptrs[c] = 0;
+            let result = '';
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (ptrs[c] < (columns[c] || []).length)
+                        result += columns[c][ptrs[c]++];
+                }
+            }
+            // strip trailing X padding (best effort)
+            return result.replace(/X+$/, '');
+        }
+
+        /* ── GRID VISUALIZER ── */
+        function buildGridViz() {
+            const table = document.getElementById('colTable');
+            const kw = keyword.toUpperCase();
+            const cols = kw.length;
+            if (cols < 2) { table.innerHTML = ''; return; }
+
+            const rawText = (document.getElementById('inputText').value || 'HELLOWORLD').toUpperCase();
+            const preview = rawText.slice(0, Math.min(rawText.length, cols * 8)); // show max 8 rows
+            const padded = pad(preview, cols);
+            const rows = padded.length / cols;
+            const order = getOrder(kw);
+
+            // rank of each column (position in sorted order)
+            const rank = Array(cols);
+            order.forEach((col, pos) => rank[col] = pos);
+
+            table.innerHTML = '';
+
+            // header row
+            const thead = document.createElement('thead');
+            const hrow = document.createElement('tr');
+            for (let c = 0; c < cols; c++) {
+                const th = document.createElement('th');
+                th.className = 'th-col-' + (rank[c] % 10);
+                th.innerHTML = kw[c] + '<span class="col-order">' + (rank[c] + 1) + '</span>';
+                hrow.appendChild(th);
+            }
+            thead.appendChild(hrow);
+            table.appendChild(thead);
+
+            // body rows
+            const tbody = document.createElement('tbody');
+            for (let r = 0; r < rows; r++) {
+                const tr = document.createElement('tr');
+                for (let c = 0; c < cols; c++) {
+                    const td = document.createElement('td');
+                    const idx = r * cols + c;
+                    const char = padded[idx];
+                    const isPad = idx >= preview.length;
+                    td.className = isPad
+                        ? 'col-' + (rank[c] % 10) + ' pad'
+                        : 'col-' + (rank[c] % 10) + ' filled';
+                    td.textContent = char;
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);
+
+            // order strip
+            buildOrderStrip();
+        }
+
+        function buildOrderStrip() {
+            const strip = document.getElementById('orderStrip');
+            strip.innerHTML = '';
+            const kw = keyword.toUpperCase();
+            const order = getOrder(kw);
+            const rank = Array(kw.length);
+            order.forEach((col, pos) => rank[col] = pos);
+
+            for (let c = 0; c < kw.length; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'order-cell';
+                cell.style.borderColor = `rgba(${colRGBs[rank[c] % 10]}, 0.4)`;
+                cell.style.background = `rgba(${colRGBs[rank[c] % 10]}, 0.12)`;
+                cell.innerHTML = `<div class="oc-letter" style="color:${colHexes[rank[c] % 10]}">${kw[c]}</div><div class="oc-num">#${rank[c] + 1}</div>`;
+                strip.appendChild(cell);
+            }
+        }
+
+        const colRGBs = ['39,174,96', '255,107,157', '0,255,209', '191,95,255', '255,215,0', '255,95,95', '125,249,255', '160,32,255', '152,255,152', '125,249,255'];
+        const colHexes = ['#27AE60', '#FF6B9D', '#00FFD1', '#BF5FFF', '#FFD700', '#FF5F5F', '#7DF9FF', '#A020FF', '#98FF98', '#7DF9FF'];
+
+        /* ── CONTROLS ── */
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btnEncrypt').className = 'mode-btn' + (m === 'encrypt' ? ' active' : '');
+            document.getElementById('btnDecrypt').className = 'mode-btn' + (m === 'decrypt' ? ' active' : '');
+            document.getElementById('actionLabel').textContent = m === 'encrypt' ? 'ENCRYPT' : 'DECRYPT';
+            document.getElementById('statusMode').textContent = m === 'encrypt' ? 'COLUMNAR ACTIVE' : 'DECRYPT MODE';
+        }
+
+        function processText() {
+            const text = document.getElementById('inputText').value;
+            const result = mode === 'encrypt'
+                ? columnarEncrypt(text, keyword)
+                : columnarDecrypt(text, keyword);
+            document.getElementById('outputText').value = result;
+            document.getElementById('outCount').textContent = result.length + '/1000';
+            updateAnalysis();
+            for (let i = 1; i <= 5; i++) setStepState(i, i < 5 ? 'done' : 'active');
+            setStep(5);
+            setTimeout(() => { for (let i = 1; i <= 6; i++) setStepState(i, i < 6 ? 'done' : 'active'); setStep(6); }, 300);
+        }
+
+        function onKeyChange() {
+            const raw = document.getElementById('keyWord').value.replace(/[^a-zA-Z]/g, '').toUpperCase();
+            document.getElementById('keyWord').value = raw;
+            keyword = raw || 'A';
+            const badge = document.getElementById('kwBadge');
+            badge.textContent = raw.length >= 2 ? raw.length + ' COLS' : 'MIN 2';
+            buildGridViz();
+        }
+
+        function randomKey() {
+            keyword = WORDS[Math.floor(Math.random() * WORDS.length)];
+            document.getElementById('keyWord').value = keyword;
+            onKeyChange();
+        }
+
+        function updateCount() {
+            document.getElementById('inCount').textContent = document.getElementById('inputText').value.length + '/1000';
+        }
+        function copyOutput() {
+            const text = document.getElementById('outputText').value;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                const n = document.getElementById('notif');
+                n.classList.add('show');
+                setTimeout(() => n.classList.remove('show'), 2000);
+            });
+        }
+
+        /* ── STEPS ── */
+        const stepTexts = ['',
+            '<span>STEP 1 — PLAINTEXT:</span> Enter the message to encrypt. All characters (letters, spaces, punctuation, numbers) are kept as-is and written into the grid. If the message doesn\'t fill the last row completely, the remaining cells are padded.',
+            '<span>STEP 2 — KEYWORD:</span> Choose a keyword (2–10 unique or repeated letters). Each letter labels a column. The keyword\'s length determines how many columns the grid has — making it also the "key" that controls the transposition.',
+            '<span>STEP 3 — FILL GRID:</span> Write the message left-to-right, row-by-row, into a grid that is exactly <span>keyword_length</span> columns wide.<div class="formula-box">rows = ⌈message_length / cols⌉<br>padding = rows × cols − msg_length<br>pad character = X</div>',
+            '<span>STEP 4 — SORT COLUMNS:</span> Rank the keyword letters in alphabetical order (ties broken left-to-right). This ranking is the read order. Each column gets a rank from 1 to n, defining the sequence in which columns will be read out.',
+            '<span>STEP 5 — READ DOWN:</span> Read each column top-to-bottom in alphabetical rank order. Concatenate all columns to produce the ciphertext. The grid visual on the right shows each column\'s color and rank number.',
+            '<span>STEP 6 — CIPHERTEXT:</span> The final transposed message is formed by concatenating all column reads. Decryption reverses this: it reconstructs column lengths from the keyword, fills columns back in order, then reads the grid row-by-row.'
+        ];
+
+        function setStepState(i, state) {
+            const el = document.getElementById('s' + i);
+            el.className = 'step-item ' + state;
+            if (i < 6) { const c = document.getElementById('con' + i); if (c) c.className = 'step-connector' + (state === 'done' ? ' done' : ''); }
+        }
+        function setStep(n) {
+            for (let i = 1; i <= 6; i++) {
+                if (i < n) setStepState(i, 'done');
+                else if (i === n) setStepState(i, 'active');
+                else setStepState(i, '');
+            }
+            document.getElementById('stepDetail').innerHTML = stepTexts[n];
+        }
+        function switchTab(tab) {
+            ['steps', 'learn', 'analysis'].forEach(t => {
+                document.getElementById('tab-' + t).className = 'steps-tab' + (t === tab ? ' active' : '');
+                document.getElementById('pane-' + t).style.display = t === tab ? 'block' : 'none';
+            });
+            if (tab === 'analysis') updateAnalysis();
+        }
+
+        /* ── ANALYSIS ── */
+        function getFreq(text) {
+            const f = Array(26).fill(0);
+            for (const c of text.toUpperCase()) { const code = c.charCodeAt(0) - 65; if (code >= 0 && code < 26) f[code]++; }
+            return f;
+        }
+        function drawFreqBars(id, text) {
+            const container = document.getElementById(id); if (!container) return;
+            container.innerHTML = '';
+            const freq = getFreq(text), max = Math.max(...freq, 1);
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach((l, i) => {
+                const wrap = document.createElement('div'); wrap.className = 'freq-bar-wrap';
+                const bar = document.createElement('div'); bar.className = 'freq-bar'; bar.style.height = Math.round((freq[i] / max) * 50) + 'px';
+                const lbl = document.createElement('div'); lbl.className = 'freq-letter'; lbl.textContent = l;
+                wrap.appendChild(bar); wrap.appendChild(lbl); container.appendChild(wrap);
+            });
+        }
+        function updateAnalysis() {
+            const input = document.getElementById('inputText').value;
+            const output = document.getElementById('outputText').value;
+            drawFreqBars('freqInput', input); drawFreqBars('freqOutput', output);
+            const letters = input.replace(/[^a-zA-Z]/g, '');
+            const words = input.trim() ? input.trim().split(/\s+/).length : 0;
+            const kw = keyword.toUpperCase();
+            const perms = factorial(kw.length);
+            const sg = document.getElementById('statsGrid');
+            if (sg) sg.innerHTML = `
+            <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">CHARS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--accent);">${input.length}</div></div>
+            <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">COLS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--pink);">${kw.length}</div></div>
+            <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">ROWS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--teal);">${input.length ? Math.ceil(input.length / kw.length) : 0}</div></div>
+            <div style="text-align:center"><div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">PERMS</div><div style="font-family:'Orbitron',monospace;font-size:20px;color:var(--blue);">${perms > 9999 ? perms.toLocaleString() : perms}</div></div>`;
+        }
+        function factorial(n) { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+
+        // ── PARTICLES
+        const pContainer = document.getElementById('particles');
+        if (pContainer) {
+            for (let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = (8 + Math.random() * 12) + 's';
+                p.style.animationDelay = (Math.random() * 15) + 's';
+                p.style.background = ['#27AE60','#BF5FFF','#FF6B9D','#00FFD1'][Math.floor(Math.random() * 4)];
+                pContainer.appendChild(p);
+            }
+        }
+
+        // init
+        buildGridViz(); setStep(1); updateAnalysis();
+    </script>
+</body>
+
+</html>

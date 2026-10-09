@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Hill Cipher</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --rv: #391B49;
+            --dl: #795690;
+            --am: #9570C6;
+            --bl: #C29CE4;
+            --ce: #999ECF;
+            --teal: #00FFD4;
+            --neon: #39FF6A;
+            --pink: #FF4FD8;
+            --purple: #B44FFF;
+            --blue: #4FC3FF;
+            --amber: #FFB84F;
+            --bg: #050A14;
+            --bg2: #0A1628;
+            --white: #fff;
+            /* panel colors adapted from bg */
+            --panel: rgba(10, 22, 40, 0.85);
+            --panel2: rgba(15, 30, 55, 0.9);
+            --border: rgba(180, 79, 255, 0.18);
+            --border2: rgba(0, 255, 212, 0.22);
+            --accent: var(--teal);
+            --accent2: #00BFA5;
+            --accent3: #009688;
+            --accent-dim: rgba(0, 255, 212, 0.09);
+            --accent-glow: rgba(0, 255, 212, 0.35);
+            --text: #E8EEFF;
+            --text-dim: #999ECF;
+            --text-muted: #4a5080;
+            --gold: #FFB84F;
+            --red: #FF4F6A;
+            --lime: #39FF6A;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            outline: none;
+            text-decoration: none;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--ce);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 255, 212, .07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 60% at 85% 80%, rgba(180, 79, 255, .10) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 50% 10%, rgba(57, 255, 106, .04) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 255, 212, .022) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 212, .022) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        ::-webkit-scrollbar { width: 5px }
+        ::-webkit-scrollbar-track { background: var(--bg) }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--teal), var(--purple)); border-radius: 10px }
+        ::selection { background: rgba(0, 255, 212, .2); color: #fff }
+
+        /* ── PARTICLES ── */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            animation: float linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0%   { transform: translateY(100vh); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateY(-20px) translateX(30px); opacity: 0; }
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 60px;
+            border-bottom: 1px solid  rgba(0, 255, 212, .15);
+            background: rgba(5, 10, 20, .82);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(24px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 28px;
+            letter-spacing: 3px;
+            background: linear-gradient(90deg, var(--purple), var(--teal), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .logo-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--teal);
+            box-shadow: 0 0 14px var(--accent-glow);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-glow); }
+            50% { opacity: 0.5; box-shadow: 0 0 28px var(--accent-glow); }
+        }
+
+        .topbar-center {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            letter-spacing: 5px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar-center span {
+            color: var(--purple);
+            font-size: 16px;
+        }
+
+        .back-btn {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: rgba(153, 158, 207, .75);
+            background: transparent;
+            border: 1.5px solid rgba(0, 255, 212, .3);
+            border-radius: 20px;
+            padding: 10px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.25s;
+        }
+
+        .back-btn:hover {
+            color: var(--teal);
+            border-color: var(--teal);
+            background: rgba(0, 255, 212, .07);
+            box-shadow: 0 0 20px rgba(0, 255, 212, .2);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            text-align: center;
+            padding: 52px 20px 36px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 6px;
+            color: var(--purple);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            text-transform: uppercase;
+        }
+
+        .hero-label::before,
+        .hero-label::after {
+            content: '';
+            width: 70px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--purple));
+        }
+
+        .hero-label::after {
+            background: linear-gradient(90deg, var(--purple), transparent);
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(52px, 8vw, 100px);
+            font-weight: 900;
+            letter-spacing: 10px;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--teal) 50%, var(--neon) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 12px;
+            text-shadow: none;
+            filter: drop-shadow(0 0 40px rgba(0,255,212,0.25));
+        }
+
+        .hero-sub {
+            font-size: 16px;
+            color: rgba(153, 158, 207, .65);
+            letter-spacing: 1px;
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            padding: 0 40px 32px;
+            position: relative;
+            z-index: 1;
+            max-width: 1500px;
+            margin: 0 auto;
+            width: 100%;
+            align-items: stretch;
+        }
+
+        .left-panel,
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .left-panel .panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .left-panel .panel textarea {
+            flex: 1;
+            height: auto;
+            min-height: 180px;
+        }
+
+        /* ── PANEL ── */
+        .panel {
+            border: 1px solid rgba(0, 255, 212, .15);
+            border-radius: 16px;
+            background: rgb(10, 22, 40);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            transition: border-color .3s, box-shadow .3s;
+        }
+
+        .panel:hover {
+            border-color: rgba(0, 255, 212, .28);
+            box-shadow: 0 8px 40px rgba(0,0,0,.4), 0 0 30px rgba(0,255,212,.05);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(0, 255, 212, .1);
+            background: rgba(0, 255, 212, .03);
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--teal);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .panel-title-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--teal);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .panel-title-dot.gold {
+            background: var(--amber);
+            box-shadow: 0 0 10px rgba(255, 184, 79, 0.5);
+        }
+
+        .char-count {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 18px 20px;
+            resize: none;
+            height: 180px;
+        }
+
+        textarea::placeholder {
+            color: rgba(153, 158, 207, .3);
+        }
+
+        /* ── INPUT ACTION BAR (inside panel) ── */
+        .input-action-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-top: 1px solid rgba(0, 255, 212, .1);
+            background: rgba(0, 255, 212, .02);
+        }
+
+        .mode-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            padding: 11px 28px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border: 1.5px solid rgba(0, 255, 212, .22);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: border-color .25s, color .25s, box-shadow .25s;
+            background: transparent;
+            color: rgba(153, 158, 207, .45);
+        }
+
+        .mode-btn:hover:not(.active) {
+            border-color: rgba(0, 255, 212, .55);
+            color: var(--teal);
+        }
+
+        .mode-btn.active {
+            border-color: var(--teal);
+            color: var(--teal);
+            box-shadow: 0 0 18px rgba(0, 255, 212, .2), inset 0 0 14px rgba(0, 255, 212, .06);
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px 24px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            border: 1.5px solid var(--teal);
+            border-radius: 30px;
+            cursor: pointer;
+            background: var(--teal);
+            color: var(--bg);
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 0 30px rgba(0, 255, 212, .5);
+        }
+
+        .action-btn:hover {
+            background: var(--teal);
+            color: var(--bg);
+            border-color: var(--teal);
+            box-shadow: 0 0 30px rgba(0, 255, 212, .5);
+            transform: translateY(-2px);
+        }
+
+        /* ── OUTPUT ── */
+        .output-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(255, 184, 79, .12);
+            background: rgba(255, 184, 79, .03);
+        }
+
+        .copy-btn {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--teal);
+            background: rgba(0, 255, 212, .08);
+            border: 1px solid rgba(0, 255, 212, .25);
+            border-radius: 20px;
+            padding: 6px 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(0, 255, 212, .2);
+            border-color: var(--teal);
+            box-shadow: 0 0 16px rgba(0,255,212,.2);
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-top: 1px solid rgba(0,255,212,.08);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--teal);
+            animation: pulse 2s infinite;
+        }
+
+        .status-text {
+            color: var(--text-muted);
+        }
+
+        .status-mode {
+            color: var(--teal);
+        }
+
+        /* ── ERROR ── */
+        .error-banner {
+            display: none;
+            border: 1px solid rgba(255, 79, 106, 0.4);
+            background: rgba(255, 79, 106, 0.07);
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--red);
+            letter-spacing: 1px;
+        }
+
+        .error-banner.show {
+            display: block;
+        }
+
+        /* ── KEY PANEL / MATRIX ── */
+        .key-panel {
+            border: 1px solid rgba(180, 79, 255, .2);
+            border-radius: 16px;
+            background: rgb(10, 22, 40);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            transition: border-color .3s, box-shadow .3s;
+        }
+
+        .key-panel:hover {
+            border-color: rgba(180, 79, 255, .38);
+            box-shadow: 0 8px 40px rgba(0,0,0,.4), 0 0 30px rgba(180,79,255,.07);
+        }
+
+        .key-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(180, 79, 255, .15);
+            background: rgba(180, 79, 255, .04);
+        }
+
+        .key-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--purple);
+            font-weight: 700;
+        }
+
+        .key-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* size selector */
+        .size-select {
+            display: flex;
+            gap: 8px;
+        }
+
+        .size-btn {
+            flex: 1;
+            padding: 10px;
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1.5px solid rgba(180, 79, 255, .2);
+            border-radius: 10px;
+            background: transparent;
+            color: rgba(153, 158, 207, .5);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .size-btn.active {
+            background: rgba(180, 79, 255, .12);
+            color: var(--purple);
+            border-color: rgba(180, 79, 255, .5);
+            box-shadow: 0 0 16px rgba(180, 79, 255, .2);
+        }
+
+        .size-btn:hover:not(.active) {
+            color: var(--ce);
+            border-color: rgba(180, 79, 255, .3);
+        }
+
+        /* matrix grid */
+        .matrix-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .matrix-grid {
+            display: grid;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .matrix-cell {
+            font-family: 'Orbitron', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--purple);
+            text-shadow: 0 0 12px rgba(180, 79, 255, .5);
+            background: rgba(180, 79, 255, .07);
+            border: 1.5px solid rgba(180, 79, 255, .22);
+            border-radius: 10px;
+            outline: none;
+            width: 100%;
+            text-align: center;
+            padding: 10px 4px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .matrix-cell:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 18px rgba(180, 79, 255, .3);
+        }
+
+        .matrix-cell::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        .matrix-bracket-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bracket {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 52px;
+            color: var(--purple);
+            opacity: 0.4;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .bracket.right {
+            transform: scaleX(-1);
+            display: inline-block;
+        }
+
+        /* det badge */
+        .det-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            background: rgba(0,0,0,.2);
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+
+        .det-label {
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+
+        .det-val {
+            color: var(--teal);
+            font-size: 15px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .badge {
+            font-size: 9px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(57, 255, 106, 0.35);
+            background: rgba(57, 255, 106, 0.1);
+            color: var(--neon);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .badge.err {
+            border-color: rgba(255, 79, 106, 0.35);
+            background: rgba(255, 79, 106, 0.1);
+            color: var(--red);
+        }
+
+        .badge.warn {
+            border-color: rgba(255, 184, 79, 0.35);
+            background: rgba(255, 184, 79, 0.1);
+            color: var(--amber);
+        }
+
+        .nav-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 9px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            background: transparent;
+            border: 1.5px solid rgba(0, 255, 212, .18);
+            border-radius: 10px;
+            color: rgba(153, 158, 207, .6);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .nav-btn:hover {
+            color: var(--teal);
+            border-color: rgba(0, 255, 212, .45);
+            background: rgba(0, 255, 212, .06);
+            box-shadow: 0 0 16px rgba(0,255,212,.12);
+        }
+
+        .rnd-btn {
+            width: 100%;
+            padding: 10px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: rgba(255, 184, 79, .07);
+            border: 1.5px solid rgba(255, 184, 79, .25);
+            border-radius: 10px;
+            color: var(--amber);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .rnd-btn:hover {
+            color: var(--bg);
+            border-color: var(--amber);
+            background: var(--amber);
+            box-shadow: 0 0 24px rgba(255,184,79,.4);
+            transform: translateY(-1px);
+        }
+
+        /* ── MAP / PREVIEW ── */
+        .map-panel {
+            border: 1px solid rgba(57, 255, 106, .15);
+            border-radius: 16px;
+            background: rgb(10, 22, 40);
+            backdrop-filter: blur(20px);
+            padding: 18px 20px;
+            transition: border-color .3s;
+        }
+
+        .map-panel:hover {
+            border-color: rgba(57, 255, 106, .28);
+        }
+
+        .map-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--neon);
+            margin-bottom: 14px;
+            font-weight: 700;
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+            width: 100%;
+        }
+
+        .map-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 2px;
+            border: 1px solid rgba(57, 255, 106, .12);
+            border-radius: 6px;
+            background: rgba(57, 255, 106, .04);
+            transition: all 0.15s;
+            min-width: 0;
+        }
+
+        .map-cell:hover {
+            border-color: rgba(57, 255, 106, .35);
+            background: rgba(57, 255, 106, .09);
+        }
+
+        .map-plain {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: rgba(153, 158, 207, .6);
+            line-height: 1;
+        }
+
+        .map-arrow {
+            font-size: 7px;
+            color: var(--text-muted);
+            line-height: 1;
+        }
+
+        .map-cipher {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--neon);
+            line-height: 1;
+            margin-top: 1px;
+        }
+
+        /* ── STEPS BOTTOM ── */
+        .steps-section {
+            border-top: 2px solid rgba(0, 255, 212, .1);
+            background: rgb(10, 22, 40);
+            backdrop-filter: blur(16px);
+            position: relative;
+            z-index: 1;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 0 57px 32px;
+        }
+
+        .steps-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 255, 212, .1);
+            padding: 0 40px;
+        }
+
+        .steps-tab {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            padding: 14px 22px;
+            color: var(--text-muted);
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .steps-tab .tab-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .steps-tab.active {
+            color: var(--teal);
+            border-bottom-color: var(--teal);
+        }
+
+        .steps-tab.active .tab-dot {
+            background: var(--teal);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .steps-content {
+            padding: 24px 40px 32px;
+        }
+
+        .steps-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .step-num {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 255, 212, .2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(10, 22, 40, .8);
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-item.active .step-num {
+            border-color: var(--teal);
+            color: var(--teal);
+            background: rgba(0, 255, 212, .09);
+            box-shadow: 0 0 22px rgba(0,255,212,.35);
+        }
+
+        .step-item.done .step-num {
+            border-color: var(--purple);
+            color: var(--purple);
+            background: rgba(180, 79, 255, .10);
+            box-shadow: 0 0 14px rgba(180,79,255,.25);
+        }
+
+        .step-lbl {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .step-item.active .step-lbl {
+            color: var(--teal);
+        }
+
+        .step-item.done .step-lbl {
+            color: var(--purple);
+        }
+
+        .step-connector {
+            width: 32px;
+            height: 2px;
+            background: rgba(0, 255, 212, .12);
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .step-connector.done {
+            background: linear-gradient(90deg, var(--purple), var(--teal));
+        }
+
+        .step-detail {
+            background: rgba(0, 255, 212, .04);
+            border: 1px solid rgba(0, 255, 212, .15);
+            border-left: 3px solid var(--teal);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 16px;
+            font-size: 14px;
+            color: rgba(153, 158, 207, .8);
+            line-height: 1.8;
+            min-height: 60px;
+        }
+
+        .step-detail span {
+            color: var(--teal);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .formula-box {
+            margin-top: 12px;
+            padding: 12px 18px;
+            background: rgba(180, 79, 255, .07);
+            border: 1px solid rgba(180, 79, 255, .2);
+            border-radius: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: var(--purple);
+            letter-spacing: 2px;
+            line-height: 2.2;
+        }
+
+        /* ── LEARN ── */
+        .learn-content {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .learn-content.active {
+            display: grid;
+        }
+
+        .learn-block {
+            background: rgb(10, 22, 40);
+            border: 1px solid rgba(0, 255, 212, .12);
+            border-radius: 12px;
+            padding: 18px 20px;
+            transition: border-color .3s;
+        }
+
+        .learn-block:hover {
+            border-color: rgba(0, 255, 212, .25);
+        }
+
+        .learn-block h4 {
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--teal);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .learn-block p {
+            font-size: 14px;
+            color: rgba(153, 158, 207, .75);
+            line-height: 1.8;
+        }
+
+        .mono {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--teal);
+        }
+
+        /* ── ANALYSIS ── */
+        .freq-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 60px;
+            margin-bottom: 8px;
+        }
+
+        .freq-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            gap: 2px;
+        }
+
+        .freq-bar {
+            width: 100%;
+            background: linear-gradient(180deg, var(--purple), var(--teal));
+            border-radius: 2px;
+            min-height: 2px;
+            transition: height 0.4s ease;
+            opacity: 0.85;
+        }
+
+        .freq-letter {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 7px;
+            color: var(--text-muted);
+        }
+
+        /* ── NOTIF ── */
+        .notif {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: rgba(10, 22, 40, .95);
+            border: 1px solid var(--teal);
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--teal);
+            letter-spacing: 1px;
+            z-index: 999;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: all 0.3s;
+            pointer-events: none;
+            box-shadow: 0 0 30px rgba(0,255,212,.25);
+        }
+
+        
+        /* matrix bracket sizing by size */
+        .bracket-2 { font-size: 52px; }
+        .bracket-3 { font-size: 78px; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero { animation: fadeInUp .7s ease both; }
+        .main { animation: fadeInUp .7s .1s ease both; }
+
+        /* ── OUTPUT ANALYSIS (Vigenere-style) ── */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card {
+            background: rgba(5, 10, 20, .6);
+            border: 1px solid rgba(0, 255, 212, .12);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--teal);
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .freq-chart-wrap {
+            background: rgba(5, 10, 20, .6);
+            border: 1px solid rgba(0, 255, 212, .12);
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        .freq-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .freq-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 80px;
+        }
+
+        .freq-bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--purple), var(--teal));
+            border-radius: 2px 2px 0 0;
+            min-height: 2px;
+            transition: height 0.5s;
+        }
+
+        .freq-labels {
+            display: flex;
+            gap: 3px;
+            margin-top: 6px;
+        }
+
+        .freq-lbl {
+            flex: 1;
+            text-align: center;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 900px) {
+            .analysis-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="particles" id="particles"></div>
+
+    <header class="topbar">
+        <div class="logo">
+            <div class="logo-dot"></div>CryptoCore
+        </div>
+        <button class="back-btn" onclick="history.back()">← BACK</button>
+    </header>
+
+    <div class="hero">
+        <div class="hero-title">HILL</div>
+        <div class="hero-sub">Encrypt &amp; decrypt using matrix multiplication over mod 26</div>
+    </div>
+
+    <div class="main">
+
+        <!-- LEFT -->
+        <div class="left-panel">
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot"></div> INPUT (PLAINTEXT)
+                    </div>
+                    <div class="char-count" id="inCount">0/1000</div>
+                </div>
+                <textarea id="inputText" placeholder="Type your secret message here..." maxlength="1000"
+                    oninput="updateCount()"></textarea>
+                <div class="input-action-bar">
+                    <div class="mode-btns">
+                        <button class="mode-btn active" id="btnEncrypt" onclick="setMode('encrypt')">Encrypt</button>
+                        <button class="mode-btn" id="btnDecrypt" onclick="setMode('decrypt')">Decrypt</button>
+                    </div>
+                    <button class="action-btn" onclick="processText()">
+                        <span id="actionLabel">ENCRYPT</span> →
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="output-header">
+                    <div class="panel-title">
+                        <div class="panel-title-dot gold"></div> OUTPUT (CIPHERTEXT)
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div class="char-count" id="outCount">0/1000</div>
+                        <button class="copy-btn" onclick="copyOutput()">COPY</button>
+                    </div>
+                </div>
+                <textarea id="outputText" placeholder="Output appears here..." readonly></textarea>
+                
+            </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="right-panel">
+
+            <div class="key-panel">
+                <div class="key-header">
+                    <div class="key-title">KEY MATRIX</div>
+                    <button class="rnd-btn" style="width:auto;padding:4px 12px;" onclick="randomMatrix()">
+                        RANDOM</button>
+                </div>
+
+                <div class="key-body">
+                    <!-- Size selector -->
+                    <div>
+                        <div class="matrix-label" style="margin-bottom:6px;">MATRIX SIZE</div>
+                        <div class="size-select">
+                            <button class="size-btn active" id="btn2x2" onclick="setSize(2)">2x2</button>
+                            <button class="size-btn" id="btn3x3" onclick="setSize(3)">3x3</button>
+                        </div>
+                    </div>
+
+                    <!-- Matrix input -->
+                    <div>
+                        <div class="matrix-label" style="margin-bottom:8px;">ENTER KEY VALUES (0-25)</div>
+                        <div class="matrix-bracket-wrap">
+                            <span class="bracket bracket-2" id="leftBracket">[</span>
+                            <div style="flex:1;" id="matrixWrap">
+                                <div class="matrix-grid" id="matrixGrid" style="grid-template-columns: 1fr 1fr;"></div>
+                            </div>
+                            <span class="bracket right bracket-2" id="rightBracket">[</span>
+                        </div>
+                    </div>
+
+                    <!-- Det info -->
+                    <div class="det-row">
+                        <span class="det-label">DET(K) MOD 26 =</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="det-val" id="detVal">—</span>
+                            <span class="badge" id="detBadge">—</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="map-panel">
+                <div class="map-title">FIRST-BLOCK MAPPING PREVIEW</div>
+                <div class="map-grid" id="mapGrid"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BOTTOM TABS -->
+    <div class="steps-section">
+        <div class="steps-tabs">
+            <button class="steps-tab active" id="tab-steps" onclick="switchTab('steps')">
+                <div class="tab-dot"></div> STEPS
+            </button>
+            <button class="steps-tab" id="tab-learn" onclick="switchTab('learn')">
+                <div class="tab-dot"></div> LEARN
+            </button>
+            <button class="steps-tab" id="tab-analysis" onclick="switchTab('analysis')">
+                <div class="tab-dot"></div> ANALYSIS
+            </button>
+        </div>
+
+        <div class="steps-content">
+
+            <!-- STEPS -->
+            <div id="pane-steps">
+                <div class="steps-row">
+                    <div class="step-item active" id="s1" onclick="setStep(1)">
+                        <div class="step-num">1</div>
+                        <div class="step-lbl">Plaintext</div>
+                    </div>
+                    <div class="step-connector" id="con1"></div>
+                    <div class="step-item" id="s2" onclick="setStep(2)">
+                        <div class="step-num">2</div>
+                        <div class="step-lbl">Key Matrix</div>
+                    </div>
+                    <div class="step-connector" id="con2"></div>
+                    <div class="step-item" id="s3" onclick="setStep(3)">
+                        <div class="step-num">3</div>
+                        <div class="step-lbl">Pad & Block</div>
+                    </div>
+                    <div class="step-connector" id="con3"></div>
+                    <div class="step-item" id="s4" onclick="setStep(4)">
+                        <div class="step-num">4</div>
+                        <div class="step-lbl">Numeric</div>
+                    </div>
+                    <div class="step-connector" id="con4"></div>
+                    <div class="step-item" id="s5" onclick="setStep(5)">
+                        <div class="step-num">5</div>
+                        <div class="step-lbl">Multiply</div>
+                    </div>
+                    <div class="step-connector" id="con5"></div>
+                    <div class="step-item" id="s6" onclick="setStep(6)">
+                        <div class="step-num">6</div>
+                        <div class="step-lbl">Mod 26</div>
+                    </div>
+                    <div class="step-connector" id="con6"></div>
+                    <div class="step-item" id="s7" onclick="setStep(7)">
+                        <div class="step-num">7</div>
+                        <div class="step-lbl">Ciphertext</div>
+                    </div>
+                </div>
+                <div class="step-detail" id="stepDetail"></div>
+            </div>
+
+            <!-- LEARN -->
+            <div id="pane-learn" style="display:none;">
+                <div class="learn-content active">
+                    <div class="learn-block">
+                        <h4>WHAT IS THE HILL CIPHER?</h4>
+                        <p>The Hill cipher is a polygraphic substitution cipher based on linear algebra. It encrypts
+                            blocks of letters at once using matrix multiplication, making it stronger than simple
+                            letter-by-letter ciphers like Caesar or Affine.</p>
+                    </div>
+                    <div class="learn-block">
+                        <h4>THE FORMULAS</h4>
+                        <p>Letters are converted to numbers (A=0…Z=25), grouped into column vectors, then multiplied by
+                            the key matrix K.</p>
+                        <div class="formula-box">
+                            Encrypt: C = K · P (mod 26)<br>
+                            Decrypt: P = K⁻¹ · C (mod 26)<br>
+                            Condition: gcd(det(K), 26) = 1
+                        </div>
+                    </div>
+                    <div class="learn-block">
+                        <h4>KEY CONSTRAINT</h4>
+                        <p>The key matrix <strong class="mono">K</strong> must be invertible mod 26, meaning <strong
+                                class="mono">gcd(det(K), 26) = 1</strong>. This ensures the modular inverse matrix K⁻¹
+                            exists, enabling decryption. Non-square or singular matrices cannot be used.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYSIS -->
+            <div id="pane-analysis" style="display:none;">
+                <div class="analysis-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statChars">0</div>
+                        <div class="stat-label">CHARACTERS</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statLetters">0</div>
+                        <div class="stat-label">LETTERS ENCRYPTED</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statBlocks">0</div>
+                        <div class="stat-label">BLOCKS PROCESSED</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statUniq">0</div>
+                        <div class="stat-label">UNIQUE LETTERS</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statIC">0.000</div>
+                        <div class="stat-label">INDEX OF COINCIDENCE</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statSize">2x2</div>
+                        <div class="stat-label">MATRIX SIZE</div>
+                    </div>
+                </div>
+                <div class="freq-chart-wrap">
+                    <div class="freq-title">OUTPUT LETTER FREQUENCY</div>
+                    <div class="freq-bars" id="freqBars"></div>
+                    <div class="freq-labels" id="freqLabels"></div>
+                </div>
+            </div>
+
+
+
+        </div>
+    </div>
+
+    <!-- (analysis panel in left col kept for backward compat, hidden) -->
+
+
+    <script>
+        // ── State ──
+        let mode = 'encrypt';
+        let matSize = 2;
+        let keyMatrix = [[6, 24], [1, 13]]; // default 2x2 (det=54=2 mod26, classic example)
+
+        // ── GCD & MOD INVERSE ──
+        function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+
+        function modInverse(a, m) {
+            a = ((a % m) + m) % m;
+            for (let x = 1; x < m; x++) if ((a * x) % m === 1) return x;
+            return -1;
+        }
+
+        // ── DETERMINANT MOD 26 ──
+        function detMod26(M) {
+            if (M.length === 2) {
+                return (((M[0][0] * M[1][1] - M[0][1] * M[1][0]) % 26) + 26) % 26;
+            }
+            // 3x3
+            let d = 0;
+            for (let c = 0; c < 3; c++) {
+                const minor = M.filter((_, r) => r !== 0).map(row => row.filter((_, cc) => cc !== c));
+                const sign = c % 2 === 0 ? 1 : -1;
+                d += sign * M[0][c] * detMod26(minor);
+            }
+            return ((d % 26) + 26) % 26;
+        }
+
+        function isValidMatrix(M) {
+            const d = detMod26(M);
+            return d !== 0 && gcd(d, 26) === 1;
+        }
+
+        // ── MATRIX INVERSE MOD 26 ──
+        function matInvMod26(M) {
+            const n = M.length;
+            if (n === 2) {
+                const d = detMod26(M);
+                const inv = modInverse(d, 26);
+                if (inv === -1) return null;
+                return [
+                    [((M[1][1] * inv) % 26 + 26) % 26, ((-M[0][1] * inv) % 26 + 26) % 26],
+                    [((-M[1][0] * inv) % 26 + 26) % 26, ((M[0][0] * inv) % 26 + 26) % 26]
+                ];
+            }
+            // 3x3 via adjugate
+            const cofactors = [];
+            for (let r = 0; r < 3; r++) {
+                cofactors[r] = [];
+                for (let c = 0; c < 3; c++) {
+                    const minor = M.filter((_, rr) => rr !== r).map(row => row.filter((_, cc) => cc !== c));
+                    const sign = (r + c) % 2 === 0 ? 1 : -1;
+                    cofactors[r][c] = ((sign * detMod26(minor)) % 26 + 26) % 26;
+                }
+            }
+            // transpose = adjugate
+            const adj = Array.from({ length: 3 }, (_, r) => Array.from({ length: 3 }, (_, c) => cofactors[c][r]));
+            const d = detMod26(M);
+            const invD = modInverse(d, 26);
+            if (invD === -1) return null;
+            return adj.map(row => row.map(v => (v * invD % 26 + 26) % 26));
+        }
+
+        // ── MAT × VEC ──
+        function matVecMul(M, v) {
+            return M.map(row => ((row.reduce((s, m, i) => s + m * v[i], 0)) % 26 + 26) % 26);
+        }
+
+        // ── ENCRYPT / DECRYPT ──
+        function hillProcess(text, M) {
+            const n = M.length;
+            const upper = text.toUpperCase();
+            const letters = upper.replace(/[^A-Z]/g, '');
+            // pad
+            let padded = letters;
+            while (padded.length % n !== 0) padded += 'X';
+            let cipher = '';
+            for (let i = 0; i < padded.length; i += n) {
+                const vec = Array.from({ length: n }, (_, j) => padded.charCodeAt(i + j) - 65);
+                const enc = matVecMul(M, vec);
+                cipher += enc.map(c => String.fromCharCode(c + 65)).join('');
+            }
+            // rebuild preserving non-alpha positions
+            let ci = 0;
+            let result = '';
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i].toUpperCase();
+                if (/[A-Z]/.test(ch)) {
+                    result += cipher[ci++] || '';
+                } else {
+                    result += text[i];
+                }
+            }
+            // append any leftover (from padding)
+            if (ci < cipher.length) result += cipher.slice(ci);
+            return result;
+        }
+
+        function processText() {
+            readMatrix();
+            if (!isValidMatrix(keyMatrix)) {
+                document.getElementById('errBanner').classList.add('show');
+                return;
+            }
+            document.getElementById('errBanner').classList.remove('show');
+
+            const text = document.getElementById('inputText').value;
+            let M = keyMatrix;
+            if (mode === 'decrypt') {
+                M = matInvMod26(keyMatrix);
+                if (!M) { document.getElementById('errBanner').classList.add('show'); return; }
+            }
+            const result = hillProcess(text, M);
+            document.getElementById('outputText').value = result;
+            document.getElementById('outCount').textContent = result.length + '/1000';
+            updateAnalysis();
+            for (let i = 1; i <= 7; i++) setStepState(i, i < 7 ? 'done' : 'active');
+            setStep(7);
+        }
+
+        // ── MATRIX UI ──
+        function readMatrix() {
+            const n = matSize;
+            for (let r = 0; r < n; r++) {
+                for (let c = 0; c < n; c++) {
+                    const el = document.getElementById(`m${r}${c}`);
+                    keyMatrix[r][c] = parseInt(el.value) || 0;
+                }
+            }
+        }
+
+        function buildMatrixUI() {
+            const n = matSize;
+            const grid = document.getElementById('matrixGrid');
+            grid.style.gridTemplateColumns = Array(n).fill('1fr').join(' ');
+            grid.innerHTML = '';
+            for (let r = 0; r < n; r++) {
+                for (let c = 0; c < n; c++) {
+                    const input = document.createElement('input');
+                    input.type = 'number'; input.className = 'matrix-cell';
+                    input.id = `m${r}${c}`;
+                    input.min = 0; input.max = 25;
+                    input.value = (keyMatrix[r] && keyMatrix[r][c] !== undefined) ? keyMatrix[r][c] : 0;
+                    input.oninput = () => { readMatrix(); updateDet(); buildMapGrid(); };
+                    grid.appendChild(input);
+                }
+            }
+            // adjust bracket height
+            const bSize = n === 2 ? '52px' : '78px';
+            document.getElementById('leftBracket').style.fontSize = bSize;
+            document.getElementById('rightBracket').style.fontSize = bSize;
+            updateDet();
+            buildMapGrid();
+        }
+
+        function setSize(n) {
+            matSize = n;
+            // resize keyMatrix
+            if (n === 2) keyMatrix = [[6, 24], [1, 13]];
+            else keyMatrix = [[6, 24, 1], [13, 16, 10], [20, 17, 15]];
+            document.getElementById('btn2x2').className = 'size-btn' + (n === 2 ? ' active' : '');
+            document.getElementById('btn3x3').className = 'size-btn' + (n === 3 ? ' active' : '');
+            buildMatrixUI();
+        }
+
+        function randomMatrix() {
+            const n = matSize;
+            let tries = 0;
+            do {
+                keyMatrix = Array.from({ length: n }, () => Array.from({ length: n }, () => Math.floor(Math.random() * 26)));
+                tries++;
+            } while (!isValidMatrix(keyMatrix) && tries < 1000);
+            buildMatrixUI();
+        }
+
+        function shiftMatrix(d) {
+            readMatrix();
+            keyMatrix = keyMatrix.map(row => row.map(v => ((v + d) % 26 + 26) % 26));
+            buildMatrixUI();
+        }
+
+        function updateDet() {
+            readMatrix();
+            const d = detMod26(keyMatrix);
+            document.getElementById('detVal').textContent = d;
+            const badge = document.getElementById('detBadge');
+            if (isValidMatrix(keyMatrix)) {
+                badge.className = 'badge'; badge.textContent = 'VALID';
+            } else {
+                badge.className = 'badge err'; badge.textContent = 'INVALID';
+            }
+        }
+
+        // ── MAP GRID (first-block preview) ──
+        function buildMapGrid() {
+            readMatrix();
+            const grid = document.getElementById('mapGrid');
+            grid.innerHTML = '';
+            if (!isValidMatrix(keyMatrix)) {
+                const msg = document.createElement('div');
+                msg.style.cssText = 'font-family:Share Tech Mono,monospace;font-size:10px;color:var(--red);letter-spacing:1px;padding:6px 0;grid-column:1/-1;';
+                msg.textContent = 'MATRIX INVALID';
+                grid.appendChild(msg);
+                return;
+            }
+            const n = matSize;
+            const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            // Show encryption of individual letters (padded with 'A')
+            for (let i = 0; i < 26; i++) {
+                const vec = Array.from({ length: n }, (_, j) => j === 0 ? i : 0);
+                const enc = matVecMul(keyMatrix, vec);
+                const cell = document.createElement('div'); cell.className = 'map-cell';
+                cell.innerHTML = `<div class="map-plain">${L[i]}</div><div class="map-arrow">↓</div><div class="map-cipher">${L[enc[0]]}</div>`;
+                grid.appendChild(cell);
+            }
+        }
+
+        // ── MODE ──
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btnEncrypt').className = 'mode-btn' + (m === 'encrypt' ? ' active' : '');
+            document.getElementById('btnDecrypt').className = 'mode-btn' + (m === 'decrypt' ? ' active' : '');
+            document.getElementById('actionLabel').textContent = m === 'encrypt' ? 'ENCRYPT' : 'DECRYPT';
+            document.getElementById('statusMode').textContent = m === 'encrypt' ? 'HILL ACTIVE' : 'DECRYPT MODE';
+        }
+
+        // ── STEPS ──
+        const stepTexts = ['',
+            '<span>STEP 1 — PLAINTEXT:</span> Enter the message to encrypt. The Hill cipher processes only alphabetic characters. Spaces and punctuation pass through unchanged. Non-letter characters are stripped before block processing.',
+            '<span>STEP 2 — KEY MATRIX:</span> Choose a square matrix K of size n×n (2×2 or 3×3). Each entry is a number 0–25. The matrix must be invertible mod 26 confirmed when gcd(det(K), 26) = 1. Use the det badge to verify.',
+            '<span>STEP 3 — PAD & BLOCK:</span> The plaintext letters are split into blocks of n characters (matching the matrix size). If the last block is incomplete, the letter <span>X</span> is appended as padding until the block is full.',
+            '<span>STEP 4 — NUMERIC CONVERSION:</span> Each letter in a block is converted to its numeric index (A=0, B=1 … Z=25), forming a column vector <span>P</span> of length n. Each block becomes one vector to be multiplied.',
+            '<span>STEP 5 — MATRIX MULTIPLY:</span> Each plaintext vector P is multiplied by the key matrix K:<div class="formula-box">C_vector = K · P</div>This multiplies every letter\'s position by a linear combination of key values — scrambling the block in a non-trivial way.',
+            '<span>STEP 6 — MOD 26:</span> Every element of the resulting vector is reduced mod 26:<div class="formula-box">C = (K · P) mod 26</div>Each number maps back to a letter (0=A … 25=Z). The block of encrypted letters is assembled in order.',
+            '<span>STEP 7 — CIPHERTEXT:</span> All encrypted blocks are concatenated in order. To decrypt, multiply ciphertext blocks by the inverse key matrix K⁻¹ mod 26:<div class="formula-box">P = K⁻¹ · C (mod 26)</div>The inverse exists if and only if gcd(det(K), 26) = 1.'
+        ];
+
+        function setStepState(i, state) {
+            const el = document.getElementById('s' + i); el.className = 'step-item ' + state;
+            if (i < 7) { const c = document.getElementById('con' + i); if (c) c.className = 'step-connector' + (state === 'done' ? ' done' : ''); }
+        }
+        function setStep(n) {
+            for (let i = 1; i <= 7; i++) { if (i < n) setStepState(i, 'done'); else if (i === n) setStepState(i, 'active'); else setStepState(i, ''); }
+            document.getElementById('stepDetail').innerHTML = stepTexts[n];
+        }
+
+        function switchTab(tab) {
+            ['steps', 'learn', 'analysis'].forEach(t => {
+                document.getElementById('tab-' + t).className = 'steps-tab' + (t === tab ? ' active' : '');
+                document.getElementById('pane-' + t).style.display = t === tab ? 'block' : 'none';
+            });
+        }
+
+        function updateAnalysis() {
+            const text = document.getElementById('outputText').value;
+            const inputText = document.getElementById('inputText').value;
+            const letters = text.toUpperCase().replace(/[^A-Z]/g, '');
+            const n = letters.length;
+
+            // stat cards
+            document.getElementById('statChars').textContent = inputText.length;
+            document.getElementById('statLetters').textContent = n;
+            document.getElementById('statBlocks').textContent = n > 0 ? Math.ceil(n / matSize) : 0;
+            document.getElementById('statUniq').textContent = n > 0 ? new Set(letters).size : 0;
+            document.getElementById('statSize').textContent = matSize + '×' + matSize;
+
+            // Index of Coincidence
+            const freq26 = new Array(26).fill(0);
+            for (const c of letters) freq26[c.charCodeAt(0) - 65]++;
+            let ic = 0;
+            for (const f of freq26) ic += f * (f - 1);
+            ic = n > 1 ? ic / (n * (n - 1)) : 0;
+            document.getElementById('statIC').textContent = ic.toFixed(3);
+
+            // frequency chart
+            const max = Math.max(...freq26, 1);
+            const letters26 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            document.getElementById('freqBars').innerHTML = letters26.map((l, i) =>
+                `<div class="freq-bar" style="height:${Math.round(freq26[i] / max * 76) + 2}px" title="${l}: ${freq26[i]}"></div>`
+            ).join('');
+            document.getElementById('freqLabels').innerHTML = letters26.map(l =>
+                `<div class="freq-lbl">${l}</div>`
+            ).join('');
+        }
+
+        function updateCount() { document.getElementById('inCount').textContent = document.getElementById('inputText').value.length + '/1000'; }
+
+        function copyOutput() {
+            const text = document.getElementById('outputText').value;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => { const n = document.getElementById('notif'); n.classList.add('show'); setTimeout(() => n.classList.remove('show'), 2000); });
+        }
+
+        // ── INIT ──
+        buildMatrixUI();
+        setStep(1);
+
+        // ── PARTICLES ──
+        const pContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDuration = (8 + Math.random() * 12) + 's';
+            p.style.animationDelay = (Math.random() * 15) + 's';
+            p.style.background = ['#00FFD4','#B44FFF','#39FF6A','#4FC3FF','#FF4FD8'][Math.floor(Math.random() * 5)];
+            const size = 1.5 + Math.random() * 2.5;
+            p.style.width = size + 'px';
+            p.style.height = size + 'px';
+            pContainer.appendChild(p);
+        }
+    </script>
+</body>
+
+</html>
